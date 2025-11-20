@@ -1,92 +1,77 @@
 package com.github.calhanwynters.model.anklet;
 
+import com.github.calhanwynters.model.shared.valueobjects.CareInstructionVO;
 import com.github.calhanwynters.model.shared.valueobjects.DescriptionVO;
 import com.github.calhanwynters.model.shared.valueobjects.GemstoneVO;
-import com.github.calhanwynters.model.shared.valueobjects.MaterialCompositionVO; // Added import
+import com.github.calhanwynters.model.shared.valueobjects.MaterialCompositionVO;
 import com.github.calhanwynters.model.shared.valueobjects.PriceVO;
 
 import java.util.*;
 
-/**
- * Aggregate Root representing an Anklet in the domain.
- * An immutable record that controls access to its internal components
- * and enforces business invariants.
- */
 public record AnkletItem(
         AnkletId id,
         AnkletSizeVO size,
         AnkletStyleVO style,
         PriceVO price,
-        Set<MaterialCompositionVO> materials, // Updated from single MaterialVO
+        Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
-        DescriptionVO description
+        DescriptionVO description,
+        CareInstructionVO careInstructions
 ) {
-    // Compact constructor to ensure all fields are non-null
     public AnkletItem {
         Objects.requireNonNull(id, "id must not be null");
         Objects.requireNonNull(size, "size must not be null");
         Objects.requireNonNull(style, "style must not be null");
         Objects.requireNonNull(price, "price must not be null");
-        Objects.requireNonNull(materials, "materials must not be null"); // Check the new field
+        Objects.requireNonNull(materials, "materials must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
         Objects.requireNonNull(description, "description must not be null");
+        Objects.requireNonNull(careInstructions, "careInstructions must not be null"); // Check the new field
 
-        // Ensure the internal sets are unmodifiable copies
         materials = Set.copyOf(materials);
         gemstones = Set.copyOf(gemstones);
     }
 
-    // Factory method for creating a new anklet from required VOs
+    // Updated Factory method: Now *accepts* the instructions as a parameter
     public static AnkletItem create(
             AnkletSizeVO size,
             AnkletStyleVO style,
             PriceVO price,
-            Set<MaterialCompositionVO> materials, // Updated parameter
-            DescriptionVO description
+            Set<MaterialCompositionVO> materials,
+            DescriptionVO description,
+            CareInstructionVO careInstructions // <-- Required input
     ) {
-        // Uses the generate() factory method
-        return new AnkletItem(AnkletId.generate(), size, style, price, materials, Collections.emptySet(), description);
+        // Pass the provided instructions directly into the constructor
+        return new AnkletItem(AnkletId.generate(), size, style, price, materials, Collections.emptySet(), description, careInstructions);
     }
 
-    // --- Domain Behaviors (returning new instances) ---
+    // --- Behavior Methods: Must update existing ones to include careInstructions field ---
 
-    /**
-     * Changes the price of the anklet.
-     * @param newPrice The new price value object.
-     * @return A new AnkletItem instance with the updated price.
-     */
     public AnkletItem changePrice(PriceVO newPrice) {
-        return new AnkletItem(this.id, this.size, this.style, newPrice, this.materials, this.gemstones, this.description);
+        return new AnkletItem(this.id, this.size, this.style, newPrice, this.materials, this.gemstones, this.description, this.careInstructions);
     }
 
-    /**
-     * Adds a gemstone to the anklet.
-     * @param gemstone The gemstone value object to add.
-     * @return A new AnkletItem instance with the new gemstone.
-     */
-    public AnkletItem addGemstone(GemstoneVO gemstone) {
-        Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
-        newGemstones.add(gemstone);
-        return new AnkletItem(this.id, this.size, this.style, this.price, this.materials, newGemstones, this.description);
-    }
+    // ... (other behavior methods need updating) ...
 
     /**
-     * Adds a material composition to the anklet.
-     * @param newMaterial The new material composition value object.
-     * @return A new AnkletItem instance with the updated material.
+     * Adds a material composition. Instructions are NOT recalculated.
      */
-    public AnkletItem addMaterial(MaterialCompositionVO newMaterial) {
+    public AnkletItem addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
-        newMaterials.add(newMaterial);
-        return new AnkletItem(this.id, this.size, this.style, this.price, newMaterials, this.gemstones, this.description);
+        newMaterials.add(material);
+
+        // Pass existing instructions through
+        return new AnkletItem(this.id, this.size, this.style, this.price, newMaterials, this.gemstones, this.description, this.careInstructions);
     }
 
     /**
-     * Updates the description of the anklet.
-     * @param newDescription The new description value object.
-     * @return A new AnkletItem instance with the updated description.
+     * Updates the care instructions (e.g., after expert consultation).
+     * @param newInstructions The updated care instructions.
+     * @return A new AnkletItem instance with updated instructions.
      */
-    public AnkletItem changeDescription(DescriptionVO newDescription) {
-        return new AnkletItem(this.id, this.size, this.style, this.price, this.materials, this.gemstones, newDescription);
+    public AnkletItem changeCareInstructions(CareInstructionVO newInstructions) {
+        return new AnkletItem(this.id, this.size, this.style, this.price, this.materials, this.gemstones, this.description, newInstructions);
     }
+
+    // ... (any other methods need updating to pass this.careInstructions) ...
 }

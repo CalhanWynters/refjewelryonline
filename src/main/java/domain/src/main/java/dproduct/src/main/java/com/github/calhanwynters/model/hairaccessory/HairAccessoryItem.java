@@ -1,5 +1,6 @@
 package com.github.calhanwynters.model.hairaccessory;
 
+import com.github.calhanwynters.model.shared.valueobjects.CareInstructionVO;
 import com.github.calhanwynters.model.shared.valueobjects.DescriptionVO;
 import com.github.calhanwynters.model.shared.valueobjects.GemstoneVO;
 import com.github.calhanwynters.model.shared.valueobjects.MaterialCompositionVO;
@@ -20,9 +21,10 @@ public record HairAccessoryItem(
         HairAccessorStyleVO style,
         HairAccessorySizeVO size,
         PriceVO price,
-        Set<MaterialCompositionVO> materials, // Updated from single MaterialVO
-        Set<GemstoneVO> gemstones,           // Added gemstones as accessories might have them
-        DescriptionVO description
+        Set<MaterialCompositionVO> materials,
+        Set<GemstoneVO> gemstones,
+        DescriptionVO description,
+        CareInstructionVO careInstructions
 ) {
     // Compact constructor to ensure all fields are non-null
     public HairAccessoryItem {
@@ -33,6 +35,7 @@ public record HairAccessoryItem(
         Objects.requireNonNull(materials, "materials must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
         Objects.requireNonNull(description, "description must not be null");
+        Objects.requireNonNull(careInstructions, "careInstructions must not be null"); // Check the new field
 
         // Ensure collections are unmodifiable copies
         materials = Set.copyOf(materials);
@@ -44,25 +47,26 @@ public record HairAccessoryItem(
             HairAccessorStyleVO style,
             HairAccessorySizeVO size,
             PriceVO price,
-            Set<MaterialCompositionVO> materials, // Updated parameter
-            DescriptionVO description
+            Set<MaterialCompositionVO> materials,
+            DescriptionVO description,
+            CareInstructionVO careInstructions // Added parameter
     ) {
         // Assume no gemstones initially for the simple create factory
-        return new HairAccessoryItem(HairAccessoryId.generate(), style, size, price, materials, Collections.emptySet(), description);
+        return new HairAccessoryItem(HairAccessoryId.generate(), style, size, price, materials, Collections.emptySet(), description, careInstructions);
     }
 
     // --- Domain Behaviors (returning new instances for immutability) ---
 
     public HairAccessoryItem changePrice(PriceVO newPrice) {
-        return new HairAccessoryItem(this.id, this.style, this.size, newPrice, this.materials, this.gemstones, this.description);
+        return new HairAccessoryItem(this.id, this.style, this.size, newPrice, this.materials, this.gemstones, this.description, this.careInstructions);
     }
 
     public HairAccessoryItem changeSize(HairAccessorySizeVO newSize) {
-        return new HairAccessoryItem(this.id, this.style, newSize, this.price, this.materials, this.gemstones, this.description);
+        return new HairAccessoryItem(this.id, this.style, newSize, this.price, this.materials, this.gemstones, this.description, this.careInstructions);
     }
 
     public HairAccessoryItem changeDescription(DescriptionVO newDescription) {
-        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, this.gemstones, newDescription);
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, this.gemstones, newDescription, this.careInstructions);
     }
 
     /**
@@ -71,7 +75,7 @@ public record HairAccessoryItem(
     public HairAccessoryItem addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
-        return new HairAccessoryItem(this.id, this.style, this.size, this.price, newMaterials, this.gemstones, this.description);
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, newMaterials, this.gemstones, this.description, this.careInstructions);
     }
 
     /**
@@ -80,6 +84,15 @@ public record HairAccessoryItem(
     public HairAccessoryItem addGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         newGemstones.add(gemstone);
-        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, newGemstones, this.description);
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, newGemstones, this.description, this.careInstructions);
+    }
+
+    /**
+     * Updates the care instructions (e.g., after expert consultation).
+     * @param newInstructions The updated care instructions.
+     * @return A new HairAccessoryItem instance with updated instructions.
+     */
+    public HairAccessoryItem changeCareInstructions(CareInstructionVO newInstructions) {
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, this.gemstones, this.description, newInstructions);
     }
 }
