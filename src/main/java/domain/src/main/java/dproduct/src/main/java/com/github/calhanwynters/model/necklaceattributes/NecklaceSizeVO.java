@@ -1,4 +1,4 @@
-package com.github.calhanwynters.model.necklace;
+package com.github.calhanwynters.model.necklaceattributes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

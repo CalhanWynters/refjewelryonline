@@ -1,29 +1,27 @@
-package com.github.calhanwynters.model.ring;
+package com.github.calhanwynters.model.hairaccessoryattributes;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Domain value object representing the style or setting attributes of a ring.
+ * Domain value object representing the style or type attributes of a hair accessory.
  * - Immutable record, domain-only (no infra annotations/deps).
- * - Stores style names as a set (e.g., "Solitaire", "Halo", "Vintage").
+ * - Stores style names as a set (e.g., "Barrette", "Headband").
  * - Ensures valid styles are used and provides display functionality.
  */
-public record RingStyleVO(
+public record HairAccessorStyleVO(
         Set<String> styles // Set of validated, normalized style names (non-null, immutable)
 ) {
     // A centralized source of truth for all valid styles in the domain
     private static final Set<String> VALID_STYLES;
 
     static {
-        VALID_STYLES = Set.of("SOLITAIRE", "HALO", "PAVE", "CHANNEL_SET", "PRONG_SET", "BEZEL_SET", "VINTAGE", "MODERN", "CLASSIC", "BAND", "STACKABLE");
+        VALID_STYLES = Set.of("BARRETTE", "HEADBAND", "SCRUNCHIE", "HAIR_PIN", "HAIR_COMB", "CLIP", "PONYTAIL_HOLDER", "TIARA", "BUN_PIN");
     }
 
     // Compact constructor with validation and normalization
-    public RingStyleVO {
+    public HairAccessorStyleVO {
         Objects.requireNonNull(styles, "styles set must not be null");
 
         // Normalize and validate all styles in the input set
@@ -45,21 +43,21 @@ public record RingStyleVO(
     // --- Factories ---
 
     /**
-     * Creates a RingStyleVO from a single style string.
+     * Creates a HairAccessorStyleVO from a single style string.
      * @param style The single style name.
-     * @return A new RingStyleVO instance.
+     * @return A new HairAccessorStyleVO instance.
      */
-    public static RingStyleVO of(String style) {
-        return new RingStyleVO(Set.of(style));
+    public static HairAccessorStyleVO of(String style) {
+        return new HairAccessorStyleVO(Set.of(style));
     }
 
     /**
-     * Creates a RingStyleVO from multiple style strings.
+     * Creates a HairAccessorStyleVO from multiple style strings.
      * @param styles The set of style names.
-     * @return A new RingStyleVO instance.
+     * @return A new HairAccessorStyleVO instance.
      */
-    public static RingStyleVO of(Set<String> styles) {
-        return new RingStyleVO(styles);
+    public static HairAccessorStyleVO of(Set<String> styles) {
+        return new HairAccessorStyleVO(styles);
     }
 
     // --- Domain Behaviors ---
@@ -81,7 +79,7 @@ public record RingStyleVO(
     public String displayName() {
         return this.styles.stream()
                 .map(style -> {
-                    // Convert "CHANNEL_SET" to "Channel Set"
+                    // Convert "HAIR_PIN" to "Hair Pin"
                     String displayName = style.replace("_", " ");
                     // Convert to Title Case
                     return displayName.charAt(0) + displayName.substring(1).toLowerCase();

@@ -1,4 +1,4 @@
-package com.github.calhanwynters.model.earring;
+package com.github.calhanwynters.model.earringattributes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

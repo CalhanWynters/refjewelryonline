@@ -1,27 +1,27 @@
-package com.github.calhanwynters.model.hairaccessory;
+package com.github.calhanwynters.model.necklaceattributes;
 
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Domain value object representing the style or type attributes of a hair accessory.
+ * Domain value object representing the style attributes of a necklace.
  * - Immutable record, domain-only (no infra annotations/deps).
- * - Stores style names as a set (e.g., "Barrette", "Headband").
+ * - Stores style names as a set (e.g., "Pendant", "Chain", "Beaded").
  * - Ensures valid styles are used and provides display functionality.
  */
-public record HairAccessorStyleVO(
+public record NecklaceStyleVO(
         Set<String> styles // Set of validated, normalized style names (non-null, immutable)
 ) {
     // A centralized source of truth for all valid styles in the domain
     private static final Set<String> VALID_STYLES;
 
     static {
-        VALID_STYLES = Set.of("BARRETTE", "HEADBAND", "SCRUNCHIE", "HAIR_PIN", "HAIR_COMB", "CLIP", "PONYTAIL_HOLDER", "TIARA", "BUN_PIN");
+        VALID_STYLES = Set.of("PENDANT", "CHAIN", "BEADED", "CHOKER", "LARIAT", "OPERA", "RIVIERA", "LAYERED", "COLLAR", "PEARL");
     }
 
     // Compact constructor with validation and normalization
-    public HairAccessorStyleVO {
+    public NecklaceStyleVO {
         Objects.requireNonNull(styles, "styles set must not be null");
 
         // Normalize and validate all styles in the input set
@@ -43,21 +43,21 @@ public record HairAccessorStyleVO(
     // --- Factories ---
 
     /**
-     * Creates a HairAccessorStyleVO from a single style string.
+     * Creates a NecklaceStyleVO from a single style string.
      * @param style The single style name.
-     * @return A new HairAccessorStyleVO instance.
+     * @return A new NecklaceStyleVO instance.
      */
-    public static HairAccessorStyleVO of(String style) {
-        return new HairAccessorStyleVO(Set.of(style));
+    public static NecklaceStyleVO of(String style) {
+        return new NecklaceStyleVO(Set.of(style));
     }
 
     /**
-     * Creates a HairAccessorStyleVO from multiple style strings.
+     * Creates a NecklaceStyleVO from multiple style strings.
      * @param styles The set of style names.
-     * @return A new HairAccessorStyleVO instance.
+     * @return A new NecklaceStyleVO instance.
      */
-    public static HairAccessorStyleVO of(Set<String> styles) {
-        return new HairAccessorStyleVO(styles);
+    public static NecklaceStyleVO of(Set<String> styles) {
+        return new NecklaceStyleVO(styles);
     }
 
     // --- Domain Behaviors ---
@@ -79,9 +79,8 @@ public record HairAccessorStyleVO(
     public String displayName() {
         return this.styles.stream()
                 .map(style -> {
-                    // Convert "HAIR_PIN" to "Hair Pin"
+                    // Convert "BEADED" to "Beaded", "RIVIERA" to "Riviera"
                     String displayName = style.replace("_", " ");
-                    // Convert to Title Case
                     return displayName.charAt(0) + displayName.substring(1).toLowerCase();
                 })
                 .collect(Collectors.joining(", "));

@@ -1,18 +1,19 @@
-package com.github.calhanwynters.model.anklet;
+package com.github.calhanwynters.model.shared.aggregates;
 
+import com.github.calhanwynters.model.shared.entities.Variant; // Import the shared interface
 import com.github.calhanwynters.model.shared.valueobjects.*;
 import java.util.*;
 
-/*** Aggregate Root representing an Anklet item in the domain.
+/*** Aggregate Root representing a Product in the domain.
  * An immutable record that controls access to its internal components
  * and enforces business invariants.*/
-public record AnkletItem(
-        AnkletId id,
+public record Product(
+        ProductId id,
         DescriptionVO description,
         GalleryVO gallery,
-        Set<AnkletVariant> variants
+        Set<Variant> variants // Now uses the generic 'Variant' interface
 ) {
-    public AnkletItem {
+    public Product {
         Objects.requireNonNull(id, "id must not be null");
         Objects.requireNonNull(description, "description must not be null");
         Objects.requireNonNull(gallery, "gallery must not be null");
@@ -22,17 +23,17 @@ public record AnkletItem(
         variants = Set.copyOf(variants);
     }
 
-    // Updated Factory method: Now accepts initial variants
-    public static AnkletItem create(
+    // Updated Factory method: Now accepts initial variants as the generic interface
+    public static Product create(
             DescriptionVO description,
             GalleryVO gallery,
-            Set<AnkletVariant> initialVariants
+            Set<Variant> initialVariants // Accepts the interface
     ) {
-        return new AnkletItem(AnkletId.generate(), description, gallery, initialVariants);
+        return new Product(ProductId.generate(), description, gallery, initialVariants);
     }
 
     // Factory method for creating an item with no variants initially
-    public static AnkletItem create(
+    public static Product create(
             DescriptionVO description,
             GalleryVO gallery
     ) {
@@ -41,31 +42,31 @@ public record AnkletItem(
 
     // --- Behavior Methods ---
 
-    public AnkletItem changeDescription(DescriptionVO newDescription) {
-        // Corrected to return a new instance with the updated description
-        return new AnkletItem(this.id, newDescription, this.gallery, this.variants);
+    public Product changeDescription(DescriptionVO newDescription) {
+        // Corrected to return a new instance with the updated description (using the correct class name)
+        return new Product(this.id, newDescription, this.gallery, this.variants);
     }
 
-    public AnkletItem addImage(ImageUrlVO newImageUrl) {
+    public Product addImage(ImageUrlVO newImageUrl) {
         Set<ImageUrlVO> updatedImages = new HashSet<>(this.gallery.images());
         updatedImages.add(newImageUrl);
         GalleryVO updatedGallery = new GalleryVO(updatedImages);
         // Corrected to use the updated gallery
-        return new AnkletItem(this.id, this.description, updatedGallery, this.variants);
+        return new Product(this.id, this.description, updatedGallery, this.variants);
     }
 
     /**
-     * Adds a new variant to the AnkletItem.
-     * @param newVariant The variant to add.
-     * @return A new AnkletItem instance with the added variant.
+     * Adds a new variant to the Product.
+     * @param newVariant The variant to add (can be any type that implements the interface).
+     * @return A new Product instance with the added variant.
      */
-    public AnkletItem addVariant(AnkletVariant newVariant) {
+    public Product addVariant(Variant newVariant) { // Accepts the interface
         Objects.requireNonNull(newVariant, "newVariant must not be null");
-        Set<AnkletVariant> updatedVariants = new HashSet<>(this.variants);
+        Set<Variant> updatedVariants = new HashSet<>(this.variants);
         if (!updatedVariants.add(newVariant)) {
             throw new IllegalArgumentException("Variant with this ID already exists.");
         }
-        return new AnkletItem(this.id, this.description, this.gallery, updatedVariants);
+        return new Product(this.id, this.description, this.gallery, updatedVariants);
     }
 
     /**
@@ -73,7 +74,7 @@ public record AnkletItem(
      * @param variantId The ID to search for.
      * @return An Optional containing the variant, if found within this aggregate.
      */
-    public Optional<AnkletVariant> findVariantById(AnkletVariantId variantId) {
+    public Optional<Variant> findVariantById(VariantId variantId) { // Uses the generic VariantId
         return this.variants.stream()
                 .filter(v -> v.id().equals(variantId))
                 .findFirst();

@@ -1,4 +1,4 @@
-package com.github.calhanwynters.model.anklet;
+package com.github.calhanwynters.model.ankletattributes;
 
 import java.util.Collections;
 import java.util.HashSet;

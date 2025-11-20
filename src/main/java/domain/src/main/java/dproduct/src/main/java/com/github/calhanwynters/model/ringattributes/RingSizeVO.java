@@ -1,4 +1,4 @@
-package com.github.calhanwynters.model.ring;
+package com.github.calhanwynters.model.ringattributes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

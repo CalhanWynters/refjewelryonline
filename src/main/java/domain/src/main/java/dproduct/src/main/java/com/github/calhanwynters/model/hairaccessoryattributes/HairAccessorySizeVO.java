@@ -1,4 +1,4 @@
-package com.github.calhanwynters.model.hairaccessory;
+package com.github.calhanwynters.model.hairaccessoryattributes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

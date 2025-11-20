@@ -1,33 +1,44 @@
-package com.github.calhanwynters.model.necklace;
+package com.github.calhanwynters.model.earringattributes;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Domain value object representing the style attributes of a necklace.
+ * Domain value object representing the style attributes of an earring.
  * - Immutable record, domain-only (no infra annotations/deps).
- * - Stores style names as a set (e.g., "Pendant", "Chain", "Beaded").
+ * - Stores style names as a set (e.g., "Stud", "Hoop").
  * - Ensures valid styles are used and provides display functionality.
  */
-public record NecklaceStyleVO(
+public record EarringStyleVO(
         Set<String> styles // Set of validated, normalized style names (non-null, immutable)
 ) {
     // A centralized source of truth for all valid styles in the domain
     private static final Set<String> VALID_STYLES;
 
     static {
-        VALID_STYLES = Set.of("PENDANT", "CHAIN", "BEADED", "CHOKER", "LARIAT", "OPERA", "RIVIERA", "LAYERED", "COLLAR", "PEARL");
+        Set<String> s = new HashSet<>();
+        s.add("STUD");
+        s.add("HOOP");
+        s.add("DROP");
+        s.add("DANGLE");
+        s.add("CHANDELIER");
+        s.add("JACKET");
+        s.add("CLUSTER");
+        s.add("HUGGIE");
+        s.add("THREADER");
+        s.add("EAR_CUFF");
+        VALID_STYLES = Collections.unmodifiableSet(s);
     }
 
     // Compact constructor with validation and normalization
-    public NecklaceStyleVO {
+    public EarringStyleVO {
         Objects.requireNonNull(styles, "styles set must not be null");
 
         // Normalize and validate all styles in the input set
-
-        // Replace the input set with the normalized, immutable set
-        styles = styles.stream()
+        Set<String> normalizedAndValidated = styles.stream()
                 .filter(Objects::nonNull)
                 .map(String::strip)
                 .map(String::toUpperCase)
@@ -38,26 +49,29 @@ public record NecklaceStyleVO(
                     }
                 })
                 .collect(Collectors.toUnmodifiableSet());
+
+        // Replace the input set with the normalized, immutable set
+        styles = normalizedAndValidated;
     }
 
     // --- Factories ---
 
     /**
-     * Creates a NecklaceStyleVO from a single style string.
+     * Creates an EarringStyleVO from a single style string.
      * @param style The single style name.
-     * @return A new NecklaceStyleVO instance.
+     * @return A new EarringStyleVO instance.
      */
-    public static NecklaceStyleVO of(String style) {
-        return new NecklaceStyleVO(Set.of(style));
+    public static EarringStyleVO of(String style) {
+        return new EarringStyleVO(Set.of(style));
     }
 
     /**
-     * Creates a NecklaceStyleVO from multiple style strings.
+     * Creates an EarringStyleVO from multiple style strings.
      * @param styles The set of style names.
-     * @return A new NecklaceStyleVO instance.
+     * @return A new EarringStyleVO instance.
      */
-    public static NecklaceStyleVO of(Set<String> styles) {
-        return new NecklaceStyleVO(styles);
+    public static EarringStyleVO of(Set<String> styles) {
+        return new EarringStyleVO(styles);
     }
 
     // --- Domain Behaviors ---
@@ -79,7 +93,7 @@ public record NecklaceStyleVO(
     public String displayName() {
         return this.styles.stream()
                 .map(style -> {
-                    // Convert "BEADED" to "Beaded", "RIVIERA" to "Riviera"
+                    // Convert "STUD" to "Stud", "EAR_CUFF" to "Ear Cuff"
                     String displayName = style.replace("_", " ");
                     return displayName.charAt(0) + displayName.substring(1).toLowerCase();
                 })
