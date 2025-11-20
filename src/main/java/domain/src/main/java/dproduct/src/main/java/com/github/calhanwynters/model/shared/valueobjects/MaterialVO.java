@@ -2,39 +2,45 @@ package com.github.calhanwynters.model.shared.valueobjects;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
+/*** Domain value object representing a material used in jewelry or manufacturing.
+ * - Immutable, domain-only (no infra annotations/deps).
+ * - Stores canonical material name and optional label.
+ * - Uses nullable field for optional data; exposes Optional via accessor.
+ * - Validation is handled in the compact constructor.*/
 public record MaterialVO(
-        String id,
         MaterialName material,
         String label // nullable; callers should use labelOptional()
 ) {
-    public static MaterialVO of(MaterialName material) {
-        return create(UUID.randomUUID().toString(), material, null);
-    }
-
-    public static MaterialVO of(MaterialName material, String label) {
-        return create(UUID.randomUUID().toString(), material, label);
-    }
-
-    public static MaterialVO withId(String id, MaterialName material, String label) {
-        return create(Objects.requireNonNull(id), material, label);
-    }
-
-    public static MaterialVO create(String id, MaterialName material, String label) {
-        Objects.requireNonNull(id, "id must not be null");
+    // Compact constructor with validation and normalization
+    public MaterialVO {
         Objects.requireNonNull(material, "material must not be null");
+
         String normalized = normalizeLabel(label);
+
         if (material == MaterialName.OTHER && normalized.isEmpty()) {
             throw new IllegalArgumentException("label is required when material is OTHER");
         }
-        return new MaterialVO(id, material, normalized.isEmpty() ? null : normalized);
+
+        // Ensure the internal field 'label' is normalized (null if empty/whitespace only)
+        label = normalized.isEmpty() ? null : normalized;
     }
 
+    // Public factories
+    public static MaterialVO of(MaterialName material) {
+        return new MaterialVO(material, null);
+    }
+
+    public static MaterialVO of(MaterialName material, String label) {
+        return new MaterialVO(material, label);
+    }
+
+    // Optional accessor
     public Optional<String> labelOptional() {
         return Optional.ofNullable(label);
     }
 
+    // Domain behaviors
     public boolean isPrecious() {
         return switch (material) {
             case GOLD, WHITE_GOLD, ROSE_GOLD, PLATINUM, PALLADIUM, SILVER -> true;
@@ -64,36 +70,23 @@ public record MaterialVO(
         };
     }
 
-    public boolean sameValue(MaterialVO other) {
-        if (other == null) return false;
-        return this.material == other.material
-                && Objects.equals(normalizeLabelOpt(this.label), normalizeLabelOpt(other.label));
-    }
-
+    // Mutators returning new instances
     public MaterialVO withLabel(String newLabel) {
-        return create(this.id, this.material, newLabel);
+        return new MaterialVO(this.material, newLabel);
     }
 
     public MaterialVO withoutLabel() {
-        return create(this.id, this.material, null);
+        return new MaterialVO(this.material, null);
     }
 
+    // Helpers
     private static String normalizeLabel(String label) {
         if (label == null) return "";
         String t = label.strip();
         return t.isEmpty() ? "" : t;
     }
 
-    private static String normalizeLabelOpt(String label) {
-        String n = normalizeLabel(label);
-        return n.isEmpty() ? null : n.toLowerCase();
-    }
-
-    @Override
-    public String toString() {  // Not annotated method overrides method annotated with @NotNull
-        return "MaterialVO[id=" + id + ", material=" + material + labelOptional().map(l -> ", label=" + l).orElse("") + "]";
-    }
-
+    // Canonical material types for domain
     public enum MaterialName {
         GOLD,
         WHITE_GOLD,

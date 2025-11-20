@@ -1,100 +1,100 @@
 package com.github.calhanwynters.model.shared.valueobjects;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Domain value object representing a product weight.
  * - Immutable record, domain-only (no infra annotations).
- * - Stores amount as double and unit as WeightUnit.
- * - Factories validate invariants (non-negative, sensible upper bound).
+ * - Stores amount as BigDecimal and unit as WeightUnit.
+ * - Validation enforces non-negative and sensible upper bounds.
  * - Provides conversions and value-based operations returning new instances.
  */
 public record WeightVO(
-        String id,
-        double amount,       // stored value in provided unit
-        WeightUnit unit      // canonical unit enum
+        BigDecimal amount,   // stored value in provided unit (non-null, non-negative)
+        WeightUnit unit      // canonical unit enum (non-null)
 ) {
-    private static final double MAX_GRAMS = 100_000.0; // sensible upper bound (100 kg)
-    private static final double EPSILON = 1e-9;
+    private static final BigDecimal MAX_GRAMS = new BigDecimal("100000.0"); // 100 kg upper bound
+    private static final int SCALE = 4; // Precision for weight calculations
+
+    // Compact constructor with validation and normalization
+    public WeightVO {
+        Objects.requireNonNull(amount, "amount must not be null");
+        Objects.requireNonNull(unit, "unit must not be null");
+
+        if (amount.signum() < 0) {
+            throw new IllegalArgumentException("amount must not be negative");
+        }
+
+        // Enforce scale and rounding for internal consistency
+        amount = amount.setScale(SCALE, RoundingMode.HALF_UP).stripTrailingZeros();
+
+        if (unit.toGrams(amount).compareTo(MAX_GRAMS) > 0) {
+            throw new IllegalArgumentException("amount exceeds maximum allowed weight");
+        }
+    }
 
     // Factories
-    public static WeightVO ofGrams(double grams) {
-        return create(UUID.randomUUID().toString(), grams, WeightUnit.GRAM);
+    public static WeightVO ofGrams(BigDecimal grams) {
+        return new WeightVO(grams, WeightUnit.GRAM);
     }
 
-    public static WeightVO ofOunces(double ounces) {
-        return create(UUID.randomUUID().toString(), ounces, WeightUnit.OUNCE);
-    }
-
-    public static WeightVO withId(String id, double amount, WeightUnit unit) {
-        return create(Objects.requireNonNull(id), amount, Objects.requireNonNull(unit));
-    }
-
-    public static WeightVO create(String id, double amount, WeightUnit unit) {
-        Objects.requireNonNull(id, "id must not be null");
-        Objects.requireNonNull(unit, "unit must not be null");
-        if (Double.isNaN(amount) || Double.isInfinite(amount)) throw new IllegalArgumentException("amount must be a finite number");
-        if (amount < 0.0 - EPSILON) throw new IllegalArgumentException("amount must not be negative");
-        double grams = unit.toGrams(amount);
-        if (grams > MAX_GRAMS + EPSILON) throw new IllegalArgumentException("amount exceeds maximum allowed weight");
-        return new WeightVO(id, amount, unit);
+    public static WeightVO ofOunces(BigDecimal ounces) {
+        return new WeightVO(ounces, WeightUnit.OUNCE);
     }
 
     // Accessors / conversions
-    public double inGrams() {
-        return unit.toGrams(amount);
+    public BigDecimal inGrams() {
+        return unit.toGrams(amount).setScale(SCALE, RoundingMode.HALF_UP).stripTrailingZeros();
     }
 
-    public double inOunces() {
-        return unit.toOunces(amount);
+    public BigDecimal inOunces() {
+        return unit.toOunces(amount).setScale(SCALE, RoundingMode.HALF_UP).stripTrailingZeros();
     }
 
     // Domain operations (immutably return new instances)
     public WeightVO add(WeightVO other) {
         Objects.requireNonNull(other);
-        double totalGrams = this.inGrams() + other.inGrams();
-        double resultInUnit = unit.fromGrams(totalGrams);
-        return create(UUID.randomUUID().toString(), resultInUnit, unit);
+        BigDecimal totalGrams = this.inGrams().add(other.inGrams());
+        // Return a new VO using the original unit of this object
+        BigDecimal resultInUnit = unit.fromGrams(totalGrams);
+        return new WeightVO(resultInUnit, unit);
     }
 
     public WeightVO subtract(WeightVO other) {
         Objects.requireNonNull(other);
-        double resultGrams = this.inGrams() - other.inGrams();
-        if (resultGrams < -EPSILON) throw new IllegalArgumentException("resulting weight must not be negative");
-        double resultInUnit = unit.fromGrams(Math.max(0.0, resultGrams));
-        return create(UUID.randomUUID().toString(), resultInUnit, unit);
+        BigDecimal resultGrams = this.inGrams().subtract(other.inGrams());
+        if (resultGrams.signum() < 0) {
+            throw new IllegalArgumentException("resulting weight must not be negative");
+        }
+        // Return a new VO using the original unit of this object
+        BigDecimal resultInUnit = unit.fromGrams(resultGrams);
+        return new WeightVO(resultInUnit, unit);
     }
 
     public int compareByGrams(WeightVO other) {
-        return Double.compare(this.inGrams(), other.inGrams());
+        return this.inGrams().compareTo(other.inGrams());
     }
 
-    public boolean sameValue(WeightVO other) {
-        if (other == null) return false;
-        return Math.abs(this.inGrams() - other.inGrams()) < 1e-6;
-    }
-
-    // Helpers / overrides
-    @Override
-    public String toString() {
-        return "WeightVO[id=" + id + ", amount=" + amount + ", unit=" + unit + "]";
-    }
-
+    // Enum for units using BigDecimal
     public enum WeightUnit {
         GRAM {
-            @Override public double toGrams(double v) { return v; }
-            @Override public double fromGrams(double g) { return g; }
-            @Override public double toOunces(double v) { return v / 28.349523125; }
+            @Override public BigDecimal toGrams(BigDecimal v) { return v; }
+            @Override public BigDecimal fromGrams(BigDecimal g) { return g; }
+            @Override public BigDecimal toOunces(BigDecimal v) { return v.divide(OUNCES_PER_GRAM, SCALE, RoundingMode.HALF_UP); }
         },
         OUNCE {
-            @Override public double toGrams(double v) { return v * 28.349523125; }
-            @Override public double fromGrams(double g) { return g / 28.349523125; }
-            @Override public double toOunces(double v) { return v; }
+            @Override public BigDecimal toGrams(BigDecimal v) { return v.multiply(GRAMS_PER_OUNCE); }
+            @Override public BigDecimal fromGrams(BigDecimal g) { return g.divide(GRAMS_PER_OUNCE, SCALE, RoundingMode.HALF_UP); }
+            @Override public BigDecimal toOunces(BigDecimal v) { return v; }
         };
 
-        public abstract double toGrams(double value);
-        public abstract double fromGrams(double grams);
-        public abstract double toOunces(double value);
+        private static final BigDecimal GRAMS_PER_OUNCE = new BigDecimal("28.349523125");
+        private static final BigDecimal OUNCES_PER_GRAM = new BigDecimal("0.03527396195"); // 1/28.349...
+
+        public abstract BigDecimal toGrams(BigDecimal value);
+        public abstract BigDecimal fromGrams(BigDecimal grams);
+        public abstract BigDecimal toOunces(BigDecimal value);
     }
 }
