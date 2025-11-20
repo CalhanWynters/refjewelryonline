@@ -2,7 +2,9 @@ package com.github.calhanwynters.model.hairaccessory;
 
 import com.github.calhanwynters.model.shared.valueobjects.CareInstructionVO;
 import com.github.calhanwynters.model.shared.valueobjects.DescriptionVO;
+import com.github.calhanwynters.model.shared.valueobjects.GalleryVO;
 import com.github.calhanwynters.model.shared.valueobjects.GemstoneVO;
+import com.github.calhanwynters.model.shared.valueobjects.ImageUrlVO;
 import com.github.calhanwynters.model.shared.valueobjects.MaterialCompositionVO;
 import com.github.calhanwynters.model.shared.valueobjects.PriceVO;
 
@@ -24,7 +26,8 @@ public record HairAccessoryItem(
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         DescriptionVO description,
-        CareInstructionVO careInstructions
+        CareInstructionVO careInstructions, // Added comma separator
+        GalleryVO gallery // Added the gallery field
 ) {
     // Compact constructor to ensure all fields are non-null
     public HairAccessoryItem {
@@ -35,7 +38,8 @@ public record HairAccessoryItem(
         Objects.requireNonNull(materials, "materials must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
         Objects.requireNonNull(description, "description must not be null");
-        Objects.requireNonNull(careInstructions, "careInstructions must not be null"); // Check the new field
+        Objects.requireNonNull(careInstructions, "careInstructions must not be null");
+        Objects.requireNonNull(gallery, "gallery must not be null"); // Added null check
 
         // Ensure collections are unmodifiable copies
         materials = Set.copyOf(materials);
@@ -49,24 +53,24 @@ public record HairAccessoryItem(
             PriceVO price,
             Set<MaterialCompositionVO> materials,
             DescriptionVO description,
-            CareInstructionVO careInstructions // Added parameter
+            CareInstructionVO careInstructions, // Added parameter
+            GalleryVO gallery // Added parameter
     ) {
-        // Assume no gemstones initially for the simple create factory
-        return new HairAccessoryItem(HairAccessoryId.generate(), style, size, price, materials, Collections.emptySet(), description, careInstructions);
+        return new HairAccessoryItem(HairAccessoryId.generate(), style, size, price, materials, Collections.emptySet(), description, careInstructions, gallery);
     }
 
     // --- Domain Behaviors (returning new instances for immutability) ---
 
     public HairAccessoryItem changePrice(PriceVO newPrice) {
-        return new HairAccessoryItem(this.id, this.style, this.size, newPrice, this.materials, this.gemstones, this.description, this.careInstructions);
+        return new HairAccessoryItem(this.id, this.style, this.size, newPrice, this.materials, this.gemstones, this.description, this.careInstructions, this.gallery);
     }
 
     public HairAccessoryItem changeSize(HairAccessorySizeVO newSize) {
-        return new HairAccessoryItem(this.id, this.style, newSize, this.price, this.materials, this.gemstones, this.description, this.careInstructions);
+        return new HairAccessoryItem(this.id, this.style, newSize, this.price, this.materials, this.gemstones, this.description, this.careInstructions, this.gallery);
     }
 
     public HairAccessoryItem changeDescription(DescriptionVO newDescription) {
-        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, this.gemstones, newDescription, this.careInstructions);
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, this.gemstones, newDescription, this.careInstructions, this.gallery);
     }
 
     /**
@@ -75,7 +79,7 @@ public record HairAccessoryItem(
     public HairAccessoryItem addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
-        return new HairAccessoryItem(this.id, this.style, this.size, this.price, newMaterials, this.gemstones, this.description, this.careInstructions);
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, newMaterials, this.gemstones, this.description, this.careInstructions, this.gallery);
     }
 
     /**
@@ -84,7 +88,7 @@ public record HairAccessoryItem(
     public HairAccessoryItem addGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         newGemstones.add(gemstone);
-        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, newGemstones, this.description, this.careInstructions);
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, newGemstones, this.description, this.careInstructions, this.gallery);
     }
 
     /**
@@ -93,6 +97,18 @@ public record HairAccessoryItem(
      * @return A new HairAccessoryItem instance with updated instructions.
      */
     public HairAccessoryItem changeCareInstructions(CareInstructionVO newInstructions) {
-        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, this.gemstones, this.description, newInstructions);
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials, this.gemstones, this.description, newInstructions, this.gallery);
+    }
+
+    /**
+     * Adds an image to the gallery and returns a new HairAccessoryItem with the updated gallery VO.
+     */
+    public HairAccessoryItem addImage(ImageUrlVO newImageUrl) {
+        Set<ImageUrlVO> updatedImages = new HashSet<>(this.gallery.images());
+        updatedImages.add(newImageUrl);
+        GalleryVO updatedGallery = new GalleryVO(updatedImages); // GalleryVO handles validation rules
+
+        return new HairAccessoryItem(this.id, this.style, this.size, this.price, this.materials,
+                this.gemstones, this.description, this.careInstructions, updatedGallery);
     }
 }

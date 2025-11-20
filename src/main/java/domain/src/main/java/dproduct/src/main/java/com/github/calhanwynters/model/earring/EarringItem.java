@@ -1,10 +1,6 @@
 package com.github.calhanwynters.model.earring;
 
-import com.github.calhanwynters.model.shared.valueobjects.CareInstructionVO;
-import com.github.calhanwynters.model.shared.valueobjects.DescriptionVO;
-import com.github.calhanwynters.model.shared.valueobjects.GemstoneVO;
-import com.github.calhanwynters.model.shared.valueobjects.MaterialCompositionVO;
-import com.github.calhanwynters.model.shared.valueobjects.PriceVO;
+import com.github.calhanwynters.model.shared.valueobjects.*;
 
 import java.util.*;
 
@@ -21,7 +17,8 @@ public record EarringItem(
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         DescriptionVO description,
-        CareInstructionVO careInstructions
+        CareInstructionVO careInstructions,
+        GalleryVO gallery
 ) {
     // Compact constructor to ensure all fields are non-null and collections are immutable
     public EarringItem {
@@ -30,9 +27,10 @@ public record EarringItem(
         Objects.requireNonNull(style, "style must not be null");
         Objects.requireNonNull(price, "price must not be null");
         Objects.requireNonNull(materials, "materials must not be null");
-        Objects.requireNonNull(description, "description must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
-        Objects.requireNonNull(careInstructions, "careInstructions must not be null"); // Check the new field
+        Objects.requireNonNull(description, "description must not be null");
+        Objects.requireNonNull(careInstructions, "careInstructions must not be null");
+        Objects.requireNonNull(gallery, "gallery must not be null");
 
         // Ensure the internal sets are unmodifiable copies
         materials = Set.copyOf(materials);
@@ -46,25 +44,26 @@ public record EarringItem(
             PriceVO price,
             Set<MaterialCompositionVO> materials,
             DescriptionVO description,
-            CareInstructionVO careInstructions // Added parameter
+            CareInstructionVO careInstructions,
+            GalleryVO gallery
     ) {
-        return new EarringItem(EarringId.generate(), size, style, price, materials, Collections.emptySet(), description, careInstructions);
+        return new EarringItem(EarringId.generate(), size, style, price, materials, Collections.emptySet(), description, careInstructions, gallery);
     }
 
     // --- Domain Behaviors (returning new instances for immutability) ---
 
     public EarringItem changePrice(PriceVO newPrice) {
-        return new EarringItem(this.id, this.size, this.style, newPrice, this.materials, this.gemstones, this.description, this.careInstructions);
+        return new EarringItem(this.id, this.size, this.style, newPrice, this.materials, this.gemstones, this.description, this.careInstructions, this.gallery);
     }
 
     public EarringItem changeDescription(DescriptionVO newDescription) {
-        return new EarringItem(this.id, this.size, this.style, this.price, this.materials, this.gemstones, newDescription, this.careInstructions);
+        return new EarringItem(this.id, this.size, this.style, this.price, this.materials, this.gemstones, newDescription, this.careInstructions, this.gallery);
     }
 
     public EarringItem addGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         newGemstones.add(gemstone);
-        return new EarringItem(this.id, this.size, this.style, this.price, this.materials, newGemstones, this.description, this.careInstructions);
+        return new EarringItem(this.id, this.size, this.style, this.price, this.materials, newGemstones, this.description, this.careInstructions, this.gallery);
     }
 
     /**
@@ -75,7 +74,7 @@ public record EarringItem(
     public EarringItem addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
-        return new EarringItem(this.id, this.size, this.style, this.price, newMaterials, this.gemstones, this.description, this.careInstructions);
+        return new EarringItem(this.id, this.size, this.style, this.price, newMaterials, this.gemstones, this.description, this.careInstructions, this.gallery);
     }
 
     /**
@@ -84,6 +83,6 @@ public record EarringItem(
      * @return A new EarringItem instance with updated instructions.
      */
     public EarringItem changeCareInstructions(CareInstructionVO newInstructions) {
-        return new EarringItem(this.id, this.size, this.style, this.price, this.materials, this.gemstones, this.description, newInstructions);
+        return new EarringItem(this.id, this.size, this.style, this.price, this.materials, this.gemstones, this.description, newInstructions, this.gallery);
     }
 }
