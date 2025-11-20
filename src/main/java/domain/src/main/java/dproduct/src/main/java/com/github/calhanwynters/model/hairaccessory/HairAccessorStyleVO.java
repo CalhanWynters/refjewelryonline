@@ -25,7 +25,9 @@ public record HairAccessorStyleVO(
         Objects.requireNonNull(styles, "styles set must not be null");
 
         // Normalize and validate all styles in the input set
-        Set<String> normalizedAndValidated = styles.stream()
+
+        // Replace the input set with the normalized, immutable set
+        styles = styles.stream()
                 .filter(Objects::nonNull)
                 .map(String::strip)
                 .map(String::toUpperCase)
@@ -36,9 +38,6 @@ public record HairAccessorStyleVO(
                     }
                 })
                 .collect(Collectors.toUnmodifiableSet());
-
-        // Replace the input set with the normalized, immutable set
-        styles = normalizedAndValidated;
     }
 
     // --- Factories ---
