@@ -7,6 +7,7 @@ import java.util.*;
 /*** Aggregate Root representing a Product in the domain.
  * An immutable record that controls access to its internal components
  * and enforces business invariants.*/
+
 public record Product(
         ProductId id,
         DescriptionVO description,

@@ -3,7 +3,6 @@ package com.github.calhanwynters.model.shared.entities;
 import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 import java.util.Set;
-import java.util.Objects;
 
 public interface Variant {
     VariantId id();
