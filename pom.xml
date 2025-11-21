@@ -25,16 +25,16 @@
         <module>src/main/java/domain</module>
         <module>src/main/java/application</module>
         <module>src/main/java/infrastructure</module>
-        <module>src/main/java/domain/src/main/java/dmedia</module>
-        <module>src/main/java/domain/src/main/java/dcart</module>
-        <module>src/main/java/domain/src/main/java/dcheckout</module>
-        <module>src/main/java/domain/src/main/java/dcommunication</module>
-        <module>src/main/java/domain/src/main/java/dreviews</module>
-        <module>src/main/java/domain/src/main/java/dblog</module>
-        <module>src/main/java/domain/src/main/java/dproduct</module>
-        <module>src/main/java/domain/src/main/java/dsearch</module>
-        <module>src/main/java/domain/src/main/java/dinventory</module>
-        <module>src/main/java/domain/src/main/java/daccounting</module>
+        <module>src/main/java/domain/daccounting</module>
+        <module>src/main/java/domain/dblog</module>
+        <module>src/main/java/domain/dcart</module>
+        <module>src/main/java/domain/dcheckout</module>
+        <module>src/main/java/domain/dcommunication</module>
+        <module>src/main/java/domain/dinventory</module>
+        <module>src/main/java/domain/dmedia</module>
+        <module>src/main/java/domain/dproduct</module>
+        <module>src/main/java/domain/dreviews</module>
+        <module>src/main/java/domain/dsearch</module>
     </modules>
     <scm>
 		<connection/>
