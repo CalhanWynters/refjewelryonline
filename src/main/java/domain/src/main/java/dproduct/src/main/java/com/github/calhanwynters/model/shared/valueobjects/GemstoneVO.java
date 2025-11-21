@@ -1,5 +1,7 @@
 package com.github.calhanwynters.model.shared.valueobjects;
 
+import com.github.calhanwynters.model.shared.enums.GemstoneType;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
@@ -78,10 +80,7 @@ public record GemstoneVO(
         };
     }
 
-    // Value semantics (record's default equals() and hashCode() now handle this perfectly)
-    public boolean equalsValue(GemstoneVO other) {
-        return Objects.equals(this, other);
-    }
+    // Value semantics are handled automatically by the Java record type.
 
     // Mutators returning new instances
     public GemstoneVO withGrade(String newGrade) {
@@ -117,10 +116,5 @@ public record GemstoneVO(
         BigDecimal stripped = carat.stripTrailingZeros();
         // Enforce consistent scale for domain precision
         return stripped.setScale(4, RoundingMode.HALF_UP);
-    }
-
-    // Canonical gemstone types for domain
-    public enum GemstoneType {
-        DIAMOND, SAPPHIRE, RUBY, EMERALD, MOONSTONE, OPAL, TOPAZ, GARNET, PERIDOT, AQUAMARINE, OTHER
     }
 }
