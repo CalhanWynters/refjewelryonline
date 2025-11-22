@@ -1,3 +1,10 @@
+// This value object needs research and work!!!!!!
+
+
+
+
+
+
 package com.github.calhanwynters.model.shared.valueobjects;
 
 import com.github.calhanwynters.model.shared.enums.GemstoneType;
