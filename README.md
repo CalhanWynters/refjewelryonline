@@ -6,3 +6,5 @@ Working on domain layer atm
 
 NOTE TO SELF:
 Research business requirements to GemstoneVO.java
+Research JavaMoney Library for PriceVO.java. Look into refining PriceVO.java
+Research implementing WeightUnitVO.java and WeightVO
