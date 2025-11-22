@@ -9,8 +9,8 @@ public record GalleryVO(Set<ImageUrlVO> images) {
         if (images.isEmpty()) {
             throw new IllegalArgumentException("A gallery must contain at least one image.");
         }
-        if (images.size() > 10) {
-            throw new IllegalArgumentException("A gallery cannot contain more than 10 images.");
+        if (images.size() > 15) {
+            throw new IllegalArgumentException("A gallery cannot contain more than 15 images.");
         }
         images = Set.copyOf(images);
     }
