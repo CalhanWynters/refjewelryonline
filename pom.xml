@@ -22,19 +22,19 @@
 		<developer/>
 	</developers>
     <modules>
-        <module>src/main/java/domain</module>
-        <module>src/main/java/application</module>
-        <module>src/main/java/infrastructure</module>
-        <module>src/main/java/domain/daccounting</module>
-        <module>src/main/java/domain/dblog</module>
-        <module>src/main/java/domain/dcart</module>
-        <module>src/main/java/domain/dcheckout</module>
-        <module>src/main/java/domain/dcommunication</module>
-        <module>src/main/java/domain/dinventory</module>
-        <module>src/main/java/domain/dmedia</module>
-        <module>src/main/java/domain/dproduct</module>
-        <module>src/main/java/domain/dreviews</module>
-        <module>src/main/java/domain/dsearch</module>
+        <module>domain</module>
+        <module>application</module>
+        <module>infrastructure</module>
+        <module>domain/daccounting</module>
+        <module>domain/dblog</module>
+        <module>domain/dcart</module>
+        <module>domain/dcheckout</module>
+        <module>domain/dcommunication</module>
+        <module>domain/dinventory</module>
+        <module>domain/dmedia</module>
+        <module>domain/dproduct</module>
+        <module>domain/dreviews</module>
+        <module>domain/dsearch</module>
     </modules>
     <scm>
 		<connection/>
