@@ -1,63 +1,70 @@
-// This value object needs research and work!!!!!!
-
-
-
-
-
-
 package com.github.calhanwynters.model.shared.valueobjects;
-
-import com.github.calhanwynters.model.shared.enums.GemstoneType;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.Optional;
 
-/*** Domain value object representing a gemstone used in jewelry.
- * - Immutable, domain-only (no infra annotations/deps).
- * - Stores canonical gemstone type, optional quality/grade label, optional carat weight.
- * - Uses nullable fields for optional data; expose Optionals via accessors.
- * - Factories validate invariants and normalize inputs.*/
+/**
+ * Domain value object representing a gemstone used in jewelry.
+ *
+ * @param type            required GemstoneTypeVO
+ * @param grade           nullable, e.g. "VVS1"
+ * @param carat           nullable BigDecimal weight in carats
+ * @param hasCertificate  whether the gemstone has a certificate (true/false)
+ * @param isLabGrown      whether the gemstone is lab-grown (true/false)
+ */
 public record GemstoneVO(
-        GemstoneType type,
-        String grade,           // nullable, e.g. "VVS1", "SI2", "AAA"
-        BigDecimal carat        // nullable, precise weight in carats
+        GemstoneTypeVO type,
+        String grade,
+        BigDecimal carat,
+        boolean hasCertificate,
+        boolean isLabGrown
 ) {
 
-    // Public factories
-    public static GemstoneVO of(GemstoneType type) {
-        return create(type, null, null);
+    // Compact constructor to ensure type non-null for all creation paths
+    public GemstoneVO {
+        Objects.requireNonNull(type, "type must not be null");
     }
 
-    public static GemstoneVO of(GemstoneType type, String grade) {
-        return create(type, grade, null);
+    public static GemstoneVO of(GemstoneTypeVO type) {
+        return create(type, null, null, false, false);
     }
 
-    public static GemstoneVO of(GemstoneType type, BigDecimal carat) {
-        return create(type, null, carat);
+    public static GemstoneVO of(GemstoneTypeVO type, String grade) {
+        return create(type, grade, null, false, false);
     }
 
-    public static GemstoneVO of(GemstoneType type, String grade, BigDecimal carat) {
-        return create(type, grade, carat);
+    public static GemstoneVO of(GemstoneTypeVO type, BigDecimal carat) {
+        return create(type, null, carat, false, false);
     }
 
-    // Centralized creation + validation
-    public static GemstoneVO create(GemstoneType type, String grade, BigDecimal carat) {
+    public static GemstoneVO of(GemstoneTypeVO type, String grade, BigDecimal carat) {
+        return create(type, grade, carat, false, false);
+    }
+
+    // New factory overloads including certificate and lab-grown flags
+    public static GemstoneVO of(GemstoneTypeVO type, String grade, BigDecimal carat, boolean hasCertificate) {
+        return create(type, grade, carat, hasCertificate, false);
+    }
+
+    public static GemstoneVO of(GemstoneTypeVO type, String grade, BigDecimal carat, boolean hasCertificate, boolean isLabGrown) {
+        return create(type, grade, carat, hasCertificate, isLabGrown);
+    }
+
+    public static GemstoneVO create(GemstoneTypeVO type, String grade, BigDecimal carat, boolean hasCertificate, boolean isLabGrown) {
         Objects.requireNonNull(type, "type must not be null");
 
         String normalizedGrade = normalizeGrade(grade);
         BigDecimal normalizedCarat = normalizeCarat(carat);
 
-        // Invariant: carat must be positive if present
         if (normalizedCarat != null && normalizedCarat.signum() <= 0) {
             throw new IllegalArgumentException("carat must be positive if specified");
         }
 
-        return new GemstoneVO(type, normalizedGrade, normalizedCarat);
+        return new GemstoneVO(type, normalizedGrade, normalizedCarat, hasCertificate, isLabGrown);
     }
 
-    // Optional accessors
     public Optional<String> gradeOptional() {
         return Optional.ofNullable(grade);
     }
@@ -66,47 +73,42 @@ public record GemstoneVO(
         return Optional.ofNullable(carat);
     }
 
-    // Domain behaviors
+    public boolean hasCertificate() {
+        return hasCertificate;
+    }
+
+    public boolean isLabGrown() {
+        return isLabGrown;
+    }
+
     public String displayName() {
-        return gradeOptional().map(g -> g + " " + canonicalName()).orElse(canonicalName());
+        return gradeOptional().map(g -> g + " " + type.name()).orElse(type.name());
     }
 
-    public String canonicalName() {
-        return switch (type) {
-            case DIAMOND -> "Diamond";
-            case SAPPHIRE -> "Sapphire";
-            case RUBY -> "Ruby";
-            case EMERALD -> "Emerald";
-            case MOONSTONE -> "Moonstone";
-            case OPAL -> "Opal";
-            case TOPAZ -> "Topaz";
-            case GARNET -> "Garnet";
-            case PERIDOT -> "Peridot";
-            case AQUAMARINE -> "Aquamarine";
-            case OTHER -> "Other";
-        };
-    }
-
-    // Value semantics are handled automatically by the Java record type.
-
-    // Mutators returning new instances
     public GemstoneVO withGrade(String newGrade) {
-        return create(this.type, newGrade, this.carat);
+        return create(this.type, newGrade, this.carat, this.hasCertificate, this.isLabGrown);
     }
 
     public GemstoneVO withCarat(BigDecimal newCarat) {
-        return create(this.type, this.grade, newCarat);
+        return create(this.type, this.grade, newCarat, this.hasCertificate, this.isLabGrown);
+    }
+
+    public GemstoneVO withCertificate(boolean hasCertificate) {
+        return create(this.type, this.grade, this.carat, hasCertificate, this.isLabGrown);
+    }
+
+    public GemstoneVO withLabGrown(boolean isLabGrown) {
+        return create(this.type, this.grade, this.carat, this.hasCertificate, isLabGrown);
     }
 
     public GemstoneVO withoutGrade() {
-        return create(this.type, null, this.carat);
+        return create(this.type, null, this.carat, this.hasCertificate, this.isLabGrown);
     }
 
     public GemstoneVO withoutCarat() {
-        return create(this.type, this.grade, null);
+        return create(this.type, this.grade, null, this.hasCertificate, this.isLabGrown);
     }
 
-    // Helpers
     private static String normalizeGrade(String grade) {
         if (grade == null) return null;
         String t = grade.strip();
@@ -115,13 +117,12 @@ public record GemstoneVO(
 
     /*
      * Normalizes carat weight:
-     * 1. Strips trailing zeros.
-     * 2. Sets consistent scale of 4 decimal places for business precision.
+     * - stripTrailingZeros then ensure scale is 4 (business precision).
      */
     private static BigDecimal normalizeCarat(BigDecimal carat) {
         if (carat == null) return null;
         BigDecimal stripped = carat.stripTrailingZeros();
-        // Enforce consistent scale for domain precision
-        return stripped.setScale(4, RoundingMode.HALF_UP);
+        int targetScale = 4;
+        return stripped.setScale(targetScale, RoundingMode.HALF_UP);
     }
 }
