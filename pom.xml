@@ -39,6 +39,10 @@
         <module>domain/dproduct</module>
         <module>domain/dreviews</module>
         <module>domain/dsearch</module>
+        <module>domain/dorder</module>
+        <module>domain/dshipping</module>
+        <module>domain/dmoney</module>
+
     </modules>
 
     <dependencyManagement>
