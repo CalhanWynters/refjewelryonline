@@ -41,7 +41,7 @@
         <module>domain/dsearch</module>
         <module>domain/dorder</module>
         <module>domain/dshipping</module>
-        <module>domain/dmoney</module>
+        <module>domain/dcommon</module>
 
     </modules>
 

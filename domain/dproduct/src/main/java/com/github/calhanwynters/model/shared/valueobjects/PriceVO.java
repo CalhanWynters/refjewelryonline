@@ -1,5 +1,6 @@
 package com.github.calhanwynters.model.shared.valueobjects;
 
+import javax.money.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
@@ -15,7 +16,7 @@ import java.util.Currency;
 public record PriceVO(
         BigDecimal amount,
         Currency currency
-) {
+) implements MonetaryAmount {
     // Define a standard scale for monetary operations (e.g., 2 decimal places for USD)
     private static final int CURRENCY_SCALE = 2;
 
@@ -113,5 +114,170 @@ public record PriceVO(
     public String formattedDisplay() {
         // Use a standard number formatter for production code
         return this.currency.getSymbol() + " " + this.amount.toPlainString();
+    }
+
+    @Override
+    public MonetaryContext getContext() {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmountFactory<? extends MonetaryAmount> getFactory() {
+        return null;
+    }
+
+    @Override
+    public boolean isGreaterThan(MonetaryAmount monetaryAmount) {
+        return false;
+    }
+
+    @Override
+    public boolean isGreaterThanOrEqualTo(MonetaryAmount monetaryAmount) {
+        return false;
+    }
+
+    @Override
+    public boolean isLessThan(MonetaryAmount monetaryAmount) {
+        return false;
+    }
+
+    @Override
+    public boolean isLessThanOrEqualTo(MonetaryAmount monetaryAmount) {
+        return false;
+    }
+
+    @Override
+    public boolean isEqualTo(MonetaryAmount monetaryAmount) {
+        return false;
+    }
+
+    @Override
+    public int signum() {
+        return 0;
+    }
+
+    @Override
+    public MonetaryAmount add(MonetaryAmount monetaryAmount) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount subtract(MonetaryAmount monetaryAmount) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount multiply(long l) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount multiply(double v) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount multiply(Number number) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount divide(long l) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount divide(double v) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount divide(Number number) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount remainder(long l) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount remainder(double v) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount remainder(Number number) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount[] divideAndRemainder(long l) {
+        return new MonetaryAmount[0];
+    }
+
+    @Override
+    public MonetaryAmount[] divideAndRemainder(double v) {
+        return new MonetaryAmount[0];
+    }
+
+    @Override
+    public MonetaryAmount[] divideAndRemainder(Number number) {
+        return new MonetaryAmount[0];
+    }
+
+    @Override
+    public MonetaryAmount divideToIntegralValue(long l) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount divideToIntegralValue(double v) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount divideToIntegralValue(Number number) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount scaleByPowerOfTen(int i) {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount abs() {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount negate() {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount plus() {
+        return null;
+    }
+
+    @Override
+    public MonetaryAmount stripTrailingZeros() {
+        return null;
+    }
+
+    @Override
+    public int compareTo(MonetaryAmount monetaryAmount) {
+        return 0;
+    }
+
+    @Override
+    public CurrencyUnit getCurrency() {
+        return null;
+    }
+
+    @Override
+    public NumberValue getNumber() {
+        return null;
     }
 }

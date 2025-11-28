@@ -2,13 +2,20 @@ package com.github.calhanwynters.model.shared.entities;
 
 import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
 import com.github.calhanwynters.model.shared.valueobjects.*;
+
+import javax.money.MonetaryAmount; // Import the standard API interface
 import java.util.Set;
 
 public interface Variant {
     VariantId id();
-    String sku(); // <-- New SKU accessor
-    PriceVO basePrice();
-    PriceVO currentPrice();
+    String sku();
+
+    // Changed PriceVO to MonetaryAmount
+    MonetaryAmount basePrice();
+
+    // Changed PriceVO to MonetaryAmount
+    MonetaryAmount currentPrice();
+
     CareInstructionVO careInstructions();
     Set<MaterialCompositionVO> materials();
     Set<GemstoneVO> gemstones();

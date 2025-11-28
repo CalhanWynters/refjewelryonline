@@ -5,6 +5,8 @@ import com.github.calhanwynters.model.earringattributes.EarringStyleVO;
 import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 
+// Import JavaMoney interfaces
+import javax.money.MonetaryAmount;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Objects;
@@ -12,20 +14,21 @@ import java.util.Set;
 
 public record EarringVariant(
         VariantId id,
-        String sku, // Added SKU field based on previous discussion
+        String sku,
         EarringSizeVO size,
         EarringStyleVO style,
-        PriceVO basePrice,     // Changed 'price' to 'basePrice' for consistency
-        PriceVO currentPrice,  // Added 'currentPrice' for consistency
+        MonetaryAmount basePrice,
+        MonetaryAmount currentPrice,
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
-        VariantStatusVO status // Added status field for consistency
+        VariantStatusVO status
 ) implements Variant {
 
+    // Compact Constructor for Validation and Normalization
     public EarringVariant {
         Objects.requireNonNull(id, "id must not be null");
-        Objects.requireNonNull(sku, "sku must not be null"); // Validate SKU
+        Objects.requireNonNull(sku, "sku must not be null");
         Objects.requireNonNull(size, "size must not be null");
         Objects.requireNonNull(style, "style must not be null");
         Objects.requireNonNull(basePrice, "basePrice must not be null");
@@ -33,51 +36,54 @@ public record EarringVariant(
         Objects.requireNonNull(materials, "materials must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
         Objects.requireNonNull(careInstructions, "careInstructions must not be null");
-        Objects.requireNonNull(status, "status must not be null"); // Validate status
+        Objects.requireNonNull(status, "status must not be null");
 
-        // Enforce business invariant: variant must have at least one material
         if (materials.isEmpty()) {
             throw new IllegalArgumentException("Earring variant must have at least one material composition.");
         }
 
-        // Use Set.copyOf() in the compact constructor for immutability
         materials = Set.copyOf(materials);
         gemstones = Set.copyOf(gemstones);
+
+        if (!basePrice.getCurrency().equals(currentPrice.getCurrency())) {
+            throw new IllegalArgumentException("Base price and current price must be in the same currency.");
+        }
     }
 
+    /**
+     * Factory method to create a new DRAFT variant.
+     */
     public static EarringVariant create(
             EarringSizeVO size,
             EarringStyleVO style,
-            PriceVO basePrice, // Use basePrice in create method
+            MonetaryAmount basePrice,
             Set<MaterialCompositionVO> materials,
             CareInstructionVO careInstructions
     ) {
         VariantId generatedId = VariantId.generate();
-        String generatedSku = "ERRNG-" + generatedId.value().substring(0, 8).toUpperCase(); // Generate SKU
+        String generatedSku = "EARRING-" + generatedId.value().substring(0, 8).toUpperCase();
 
-        // We use Set.of() for an empty immutable set of gemstones by default
         return new EarringVariant(
                 generatedId,
                 generatedSku,
                 size,
                 style,
                 basePrice,
-                basePrice, // currentPrice defaults to basePrice
+                basePrice,
                 materials,
-                Set.of(),
+                Set.of(), // No gemstones initially
                 careInstructions,
-                VariantStatusVO.DRAFT // Default status to DRAFT
+                VariantStatusVO.DRAFT
         );
     }
 
-    // --- New Behavior: Variant Comparison Logic ---
+    // --- Variant Comparison Logic ---
 
     @Override
     public boolean hasSameAttributes(Variant other) {
         if (!(other instanceof EarringVariant otherEarring)) {
-            return false; // Not the same *type* of variant
+            return false;
         }
-        // Compare all significant physical/descriptive attributes
         return Objects.equals(this.size, otherEarring.size()) &&
                 Objects.equals(this.style, otherEarring.style()) &&
                 Objects.equals(this.materials, otherEarring.materials()) &&
@@ -87,29 +93,19 @@ public record EarringVariant(
 
     // --- Behavior Methods ---
 
-    // Renamed changePrice to changeBasePrice for consistency, applying price invariant
-    public EarringVariant changeBasePrice(PriceVO newBasePrice) {
-        // Enforce the invariant: When base price changes, current price must match it.
+    public EarringVariant changeBasePrice(MonetaryAmount newBasePrice) {
         return new EarringVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
-    // Added changeCurrentPrice for manual adjustments/discounts
-    public EarringVariant changeCurrentPrice(PriceVO newCurrentPrice) {
+    public EarringVariant changeCurrentPrice(MonetaryAmount newCurrentPrice) {
         return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
-    /**
-     * Applies a percentage discount to the current price.
-     */
     public EarringVariant applyDiscount(PercentageVO discount) {
-        BigDecimal discountedAmount = this.basePrice.amount().multiply(BigDecimal.ONE.subtract(discount.value()));
-        PriceVO discountedPrice = new PriceVO(discountedAmount, this.basePrice.currency());
+        MonetaryAmount discountedPrice = this.basePrice.multiply(BigDecimal.ONE.subtract(discount.value()));
         return this.changeCurrentPrice(discountedPrice);
     }
 
-    /**
-     * Removes the applied discount and reverts the price to the base price.
-     */
     public EarringVariant removeDiscount() {
         return this.changeCurrentPrice(this.basePrice);
     }
@@ -120,53 +116,36 @@ public record EarringVariant(
         return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
     }
 
-    /**
-     * Removes a gemstone from the variant.
-     * @param gemstone The gemstone to remove.
-     * @return A new EarringVariant instance without the specified gemstone.
-     */
     public EarringVariant removeGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         if (newGemstones.remove(gemstone)) {
             return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
         }
-        return this; // Return the current instance if no change occurred
+        return this;
     }
 
-    /**
-     * Adds a material composition.
-     */
     public EarringVariant addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
         return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
     }
 
-    /**
-     * Removes a material composition.
-     * @param material The material to remove.
-     * @return A new EarringVariant instance without the specified material.
-     */
     public EarringVariant removeMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         if (newMaterials.remove(material)) {
-            // Must re-validate that the resulting set is not empty before creating the new instance
             if (newMaterials.isEmpty()) {
                 throw new IllegalStateException("Earring variant must have at least one material composition; cannot remove the last one.");
             }
             return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
         }
-        return this; // Return the current instance if no change occurred
+        return this;
     }
 
-    /**
-     * Updates the care instructions.
-     */
     public EarringVariant changeCareInstructions(CareInstructionVO newInstructions) {
         return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, newInstructions, this.status);
     }
 
-    // --- Lifecycle/Status Behavior Methods (added for consistency with AnkletVariant) ---
+    // --- Lifecycle/Status Behavior Methods ---
 
     public boolean isActive() {
         return this.status == VariantStatusVO.ACTIVE;

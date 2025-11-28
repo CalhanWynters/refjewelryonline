@@ -5,24 +5,27 @@ import com.github.calhanwynters.model.necklaceattributes.NecklaceStyleVO;
 import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 
+// Import JavaMoney interfaces
+import javax.money.MonetaryAmount;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public record NecklaceVariant(
-        VariantId id, // Using the shared VariantId from shared.valueobjects
-        String sku, // Added SKU field
-        NecklaceSizeVO size, // Specific VO
-        NecklaceStyleVO style, // Specific VO
-        PriceVO basePrice, // Changed 'price' to 'basePrice'
-        PriceVO currentPrice, // Added 'currentPrice'
+        VariantId id,
+        String sku,
+        NecklaceSizeVO size,
+        NecklaceStyleVO style,
+        MonetaryAmount basePrice,
+        MonetaryAmount currentPrice,
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
-        VariantStatusVO status // Added status field
+        VariantStatusVO status
 ) implements Variant {
 
+    // Compact Constructor for Validation and Normalization
     public NecklaceVariant {
         Objects.requireNonNull(id, "id must not be null");
         Objects.requireNonNull(sku, "sku must not be null");
@@ -35,49 +38,52 @@ public record NecklaceVariant(
         Objects.requireNonNull(careInstructions, "careInstructions must not be null");
         Objects.requireNonNull(status, "status must not be null");
 
-        // Enforce business invariant: variant must have at least one material
         if (materials.isEmpty()) {
             throw new IllegalArgumentException("Necklace variant must have at least one material composition.");
         }
 
-        // Use Set.copyOf() in the compact constructor for immutability
         materials = Set.copyOf(materials);
         gemstones = Set.copyOf(gemstones);
+
+        if (!basePrice.getCurrency().equals(currentPrice.getCurrency())) {
+            throw new IllegalArgumentException("Base price and current price must be in the same currency.");
+        }
     }
 
+    /**
+     * Factory method to create a new DRAFT variant.
+     */
     public static NecklaceVariant create(
             NecklaceSizeVO size,
             NecklaceStyleVO style,
-            PriceVO basePrice, // Use basePrice in create method
+            MonetaryAmount basePrice,
             Set<MaterialCompositionVO> materials,
             CareInstructionVO careInstructions
     ) {
         VariantId generatedId = VariantId.generate();
-        String generatedSku = "NCLCE-" + generatedId.value().substring(0, 8).toUpperCase(); // Generate SKU
+        String generatedSku = "NKLACE-" + generatedId.value().substring(0, 8).toUpperCase();
 
-        // We use the shared VariantId.generate() here
         return new NecklaceVariant(
                 generatedId,
                 generatedSku,
                 size,
                 style,
                 basePrice,
-                basePrice, // currentPrice defaults to basePrice
+                basePrice, // current price starts the same as base price
                 materials,
-                Set.of(),
+                Set.of(), // No gemstones initially
                 careInstructions,
-                VariantStatusVO.DRAFT // Default status to DRAFT
+                VariantStatusVO.DRAFT
         );
     }
 
-    // --- New Behavior: Variant Comparison Logic (added for consistency) ---
+    // --- Variant Comparison Logic ---
 
     @Override
     public boolean hasSameAttributes(Variant other) {
         if (!(other instanceof NecklaceVariant otherNecklace)) {
-            return false; // Not the same *type* of variant
+            return false;
         }
-        // Compare all significant physical/descriptive attributes
         return Objects.equals(this.size, otherNecklace.size()) &&
                 Objects.equals(this.style, otherNecklace.style()) &&
                 Objects.equals(this.materials, otherNecklace.materials()) &&
@@ -87,28 +93,19 @@ public record NecklaceVariant(
 
     // --- Behavior Methods ---
 
-    public NecklaceVariant changeBasePrice(PriceVO newBasePrice) {
-        // Enforce the invariant: When base price changes, current price must match it.
+    public NecklaceVariant changeBasePrice(MonetaryAmount newBasePrice) {
         return new NecklaceVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
-    public NecklaceVariant changeCurrentPrice(PriceVO newCurrentPrice) {
-        // This method is used for manual price adjustments or discounts.
+    public NecklaceVariant changeCurrentPrice(MonetaryAmount newCurrentPrice) {
         return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
-    /**
-     * Applies a percentage discount to the current price.
-     */
     public NecklaceVariant applyDiscount(PercentageVO discount) {
-        BigDecimal discountedAmount = this.basePrice.amount().multiply(BigDecimal.ONE.subtract(discount.value()));
-        PriceVO discountedPrice = new PriceVO(discountedAmount, this.basePrice.currency());
+        MonetaryAmount discountedPrice = this.basePrice.multiply(BigDecimal.ONE.subtract(discount.value()));
         return this.changeCurrentPrice(discountedPrice);
     }
 
-    /**
-     * Removes the applied discount and reverts the price to the base price.
-     */
     public NecklaceVariant removeDiscount() {
         return this.changeCurrentPrice(this.basePrice);
     }
@@ -119,9 +116,6 @@ public record NecklaceVariant(
         return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
     }
 
-    /**
-     * Removes a gemstone from the variant.
-     */
     public NecklaceVariant removeGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         if (newGemstones.remove(gemstone)) {
@@ -130,22 +124,15 @@ public record NecklaceVariant(
         return this;
     }
 
-    /**
-     * Adds a material composition.
-     */
     public NecklaceVariant addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
         return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
     }
 
-    /**
-     * Removes a material composition.
-     */
     public NecklaceVariant removeMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         if (newMaterials.remove(material)) {
-            // Must re-validate that the resulting set is not empty before creating the new instance
             if (newMaterials.isEmpty()) {
                 throw new IllegalStateException("Necklace variant must have at least one material composition; cannot remove the last one.");
             }
@@ -154,14 +141,11 @@ public record NecklaceVariant(
         return this;
     }
 
-    /**
-     * Updates the care instructions.
-     */
     public NecklaceVariant changeCareInstructions(CareInstructionVO newInstructions) {
         return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, newInstructions, this.status);
     }
 
-    // --- Lifecycle/Status Behavior Methods (added for consistency) ---
+    // --- Lifecycle/Status Behavior Methods ---
 
     public boolean isActive() {
         return this.status == VariantStatusVO.ACTIVE;

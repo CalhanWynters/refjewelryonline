@@ -16,6 +16,17 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Centralize JavaMoney API version -->
+        <javamoney-api.version>1.1</javamoney-api.version>
     </properties>
+
+    <dependencies>
+        <!-- JavaMoney API interfaces (used in the domain layer) -->
+        <dependency>
+            <groupId>javax.money</groupId>
+            <artifactId>money-api</artifactId>
+            <version>${javamoney-api.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>
