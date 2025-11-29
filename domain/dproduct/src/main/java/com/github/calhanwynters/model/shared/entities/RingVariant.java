@@ -2,7 +2,7 @@ package com.github.calhanwynters.model.shared.entities;
 
 import com.github.calhanwynters.model.ringattributes.RingSizeVO;
 import com.github.calhanwynters.model.ringattributes.RingStyleVO;
-import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
+import com.github.calhanwynters.model.shared.enums.VariantStatusEnums;
 import com.github.calhanwynters.model.shared.valueobjects.CareInstructionVO;
 import com.github.calhanwynters.model.shared.valueobjects.GemstoneVO;
 import com.github.calhanwynters.model.shared.valueobjects.MaterialCompositionVO;
@@ -26,7 +26,7 @@ public record RingVariant(
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
-        VariantStatusVO status
+        VariantStatusEnums status
 ) implements Variant {
 
     // Compact Constructor for Validation and Normalization
@@ -77,7 +77,7 @@ public record RingVariant(
                 materials,
                 Set.of(), // No gemstones initially
                 careInstructions,
-                VariantStatusVO.DRAFT
+                VariantStatusEnums.DRAFT
         );
     }
 
@@ -152,21 +152,21 @@ public record RingVariant(
     // --- Lifecycle/Status Behavior Methods ---
 
     public boolean isActive() {
-        return this.status == VariantStatusVO.ACTIVE;
+        return this.status == VariantStatusEnums.ACTIVE;
     }
 
     public RingVariant activate() {
-        if (this.status == VariantStatusVO.DISCONTINUED) {
+        if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.ACTIVE);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public RingVariant deactivate() {
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.INACTIVE);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public RingVariant markAsDiscontinued() {
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.DISCONTINUED);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }

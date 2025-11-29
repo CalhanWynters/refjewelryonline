@@ -2,7 +2,7 @@ package com.github.calhanwynters.model.shared.entities;
 
 import com.github.calhanwynters.model.hairaccessoryattributes.HairAccessorySizeVO;
 import com.github.calhanwynters.model.hairaccessoryattributes.HairAccessorStyleVO;
-import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
+import com.github.calhanwynters.model.shared.enums.VariantStatusEnums;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 
 // Import JavaMoney interfaces
@@ -22,7 +22,7 @@ public record HairAccessoryVariant(
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
-        VariantStatusVO status
+        VariantStatusEnums status
 ) implements Variant {
 
     // Compact Constructor for Validation and Normalization
@@ -73,7 +73,7 @@ public record HairAccessoryVariant(
                 materials,
                 Set.of(), // No gemstones initially
                 careInstructions,
-                VariantStatusVO.DRAFT
+                VariantStatusEnums.DRAFT
         );
     }
 
@@ -148,21 +148,21 @@ public record HairAccessoryVariant(
     // --- Lifecycle/Status Behavior Methods ---
 
     public boolean isActive() {
-        return this.status == VariantStatusVO.ACTIVE;
+        return this.status == VariantStatusEnums.ACTIVE;
     }
 
     public HairAccessoryVariant activate() {
-        if (this.status == VariantStatusVO.DISCONTINUED) {
+        if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.ACTIVE);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public HairAccessoryVariant deactivate() {
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.INACTIVE);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public HairAccessoryVariant markAsDiscontinued() {
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.DISCONTINUED);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }

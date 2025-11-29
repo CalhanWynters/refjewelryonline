@@ -1,6 +1,6 @@
 package com.github.calhanwynters.model.shared.entities;
 
-import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
+import com.github.calhanwynters.model.shared.enums.VariantStatusEnums;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 
 import javax.money.MonetaryAmount; // Import the standard API interface
@@ -10,16 +10,14 @@ public interface Variant {
     VariantId id();
     String sku();
 
-    // Changed PriceVO to MonetaryAmount
     MonetaryAmount basePrice();
 
-    // Changed PriceVO to MonetaryAmount
     MonetaryAmount currentPrice();
 
     CareInstructionVO careInstructions();
     Set<MaterialCompositionVO> materials();
     Set<GemstoneVO> gemstones();
-    VariantStatusVO status();
+    VariantStatusEnums status();
 
     /**
      * Checks if this variant has the same physical attributes as another variant,

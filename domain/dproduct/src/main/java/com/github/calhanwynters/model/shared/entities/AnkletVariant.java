@@ -2,7 +2,7 @@ package com.github.calhanwynters.model.shared.entities;
 
 import com.github.calhanwynters.model.ankletattributes.AnkletSizeVO;
 import com.github.calhanwynters.model.ankletattributes.AnkletStyleVO;
-import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
+import com.github.calhanwynters.model.shared.enums.VariantStatusEnums;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 
 // Import JavaMoney interfaces
@@ -22,7 +22,7 @@ public record AnkletVariant(
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
-        VariantStatusVO status
+        VariantStatusEnums status
 ) implements Variant {
 
     public AnkletVariant {
@@ -69,7 +69,7 @@ public record AnkletVariant(
                 materials,
                 Set.of(),
                 careInstructions,
-                VariantStatusVO.DRAFT
+                VariantStatusEnums.DRAFT
         );
     }
 
@@ -140,21 +140,21 @@ public record AnkletVariant(
     // --- Lifecycle/Status Behavior Methods ---
 
     public boolean isActive() {
-        return this.status == VariantStatusVO.ACTIVE;
+        return this.status == VariantStatusEnums.ACTIVE;
     }
 
     public AnkletVariant activate() {
-        if (this.status == VariantStatusVO.DISCONTINUED) {
+        if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.ACTIVE);
+        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public AnkletVariant deactivate() {
-        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.INACTIVE);
+        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public AnkletVariant markAsDiscontinued() {
-        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.DISCONTINUED);
+        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }

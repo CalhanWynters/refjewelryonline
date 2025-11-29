@@ -2,7 +2,7 @@ package com.github.calhanwynters.model.shared.entities;
 
 import com.github.calhanwynters.model.necklaceattributes.NecklaceSizeVO;
 import com.github.calhanwynters.model.necklaceattributes.NecklaceStyleVO;
-import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
+import com.github.calhanwynters.model.shared.enums.VariantStatusEnums;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 
 // Import JavaMoney interfaces
@@ -22,7 +22,7 @@ public record NecklaceVariant(
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
-        VariantStatusVO status
+        VariantStatusEnums status
 ) implements Variant {
 
     // Compact Constructor for Validation and Normalization
@@ -73,7 +73,7 @@ public record NecklaceVariant(
                 materials,
                 Set.of(), // No gemstones initially
                 careInstructions,
-                VariantStatusVO.DRAFT
+                VariantStatusEnums.DRAFT
         );
     }
 
@@ -148,21 +148,21 @@ public record NecklaceVariant(
     // --- Lifecycle/Status Behavior Methods ---
 
     public boolean isActive() {
-        return this.status == VariantStatusVO.ACTIVE;
+        return this.status == VariantStatusEnums.ACTIVE;
     }
 
     public NecklaceVariant activate() {
-        if (this.status == VariantStatusVO.DISCONTINUED) {
+        if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.ACTIVE);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public NecklaceVariant deactivate() {
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.INACTIVE);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public NecklaceVariant markAsDiscontinued() {
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.DISCONTINUED);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }
