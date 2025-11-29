@@ -2,9 +2,11 @@ package com.github.calhanwynters.model.shared.entities;
 
 import com.github.calhanwynters.model.ankletattributes.AnkletSizeVO;
 import com.github.calhanwynters.model.ankletattributes.AnkletStyleVO;
-import com.github.calhanwynters.model.shared.enums.VariantStatusVO;
+import com.github.calhanwynters.model.shared.enums.VariantStatusEnums;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 
+// Import JavaMoney interfaces
+import javax.money.MonetaryAmount;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Objects;
@@ -12,15 +14,15 @@ import java.util.Set;
 
 public record AnkletVariant(
         VariantId id,
-        String sku, // <-- New SKU field
+        String sku,
         AnkletSizeVO size,
         AnkletStyleVO style,
-        PriceVO basePrice,
-        PriceVO currentPrice,
+        MonetaryAmount basePrice,
+        MonetaryAmount currentPrice,
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
-        VariantStatusVO status
+        VariantStatusEnums status
 ) implements Variant {
 
     public AnkletVariant {
@@ -41,22 +43,25 @@ public record AnkletVariant(
 
         materials = Set.copyOf(materials);
         gemstones = Set.copyOf(gemstones);
+
+        if (!basePrice.getCurrency().equals(currentPrice.getCurrency())) {
+            throw new IllegalArgumentException("Base price and current price must be in the same currency.");
+        }
     }
 
     public static AnkletVariant create(
             AnkletSizeVO size,
             AnkletStyleVO style,
-            PriceVO basePrice,
+            MonetaryAmount basePrice,
             Set<MaterialCompositionVO> materials,
             CareInstructionVO careInstructions
     ) {
         VariantId generatedId = VariantId.generate();
-        // A simple example of generating a standard SKU based on the type and ID
         String generatedSku = "ANKLT-" + generatedId.value().substring(0, 8).toUpperCase();
 
         return new AnkletVariant(
                 generatedId,
-                generatedSku, // Pass the generated SKU to the constructor
+                generatedSku,
                 size,
                 style,
                 basePrice,
@@ -64,18 +69,15 @@ public record AnkletVariant(
                 materials,
                 Set.of(),
                 careInstructions,
-                VariantStatusVO.DRAFT
+                VariantStatusEnums.DRAFT
         );
     }
-
-    // --- New Behavior: Variant Comparison Logic ---
 
     @Override
     public boolean hasSameAttributes(Variant other) {
         if (!(other instanceof AnkletVariant otherAnklet)) {
-            return false; // Not the same *type* of variant
+            return false;
         }
-        // Compare all significant physical/descriptive attributes
         return Objects.equals(this.size, otherAnklet.size()) &&
                 Objects.equals(this.style, otherAnklet.style()) &&
                 Objects.equals(this.materials, otherAnklet.materials()) &&
@@ -83,36 +85,19 @@ public record AnkletVariant(
                 Objects.equals(this.careInstructions, otherAnklet.careInstructions());
     }
 
-    // --- Behavior Methods ---
-
-    // Note: The record accessors id(), sku(), basePrice(), currentPrice(), status(), etc.
-    // are generated automatically and fulfill the interface contract.
-
-    public AnkletVariant changeBasePrice(PriceVO newBasePrice) {
-        // Enforce the invariant: When base price changes, current price must match it.
-        // This ensures the current price is always "correct" relative to the new base price, clearing any old discounts/manual changes.
+    public AnkletVariant changeBasePrice(MonetaryAmount newBasePrice) {
         return new AnkletVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
-    public AnkletVariant changeCurrentPrice(PriceVO newCurrentPrice) {
-        // This method is used for manual price adjustments or discounts, which override the base price temporarily.
-        // It maintains the integrity of the *current* pricing state.
+    public AnkletVariant changeCurrentPrice(MonetaryAmount newCurrentPrice) {
         return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
-    /**
-     * Applies a percentage discount to the current price.
-     */
     public AnkletVariant applyDiscount(PercentageVO discount) {
-        BigDecimal discountedAmount = this.basePrice.amount().multiply(BigDecimal.ONE.subtract(discount.value()));
-        // Ensure discounted amount doesn't go negative, handled implicitly if PriceVO validates non-negative amounts
-        PriceVO discountedPrice = new PriceVO(discountedAmount, this.basePrice.currency());
+        MonetaryAmount discountedPrice = this.basePrice.multiply(BigDecimal.ONE.subtract(discount.value()));
         return this.changeCurrentPrice(discountedPrice);
     }
 
-    /**
-     * Removes the applied discount and reverts the price to the base price.
-     */
     public AnkletVariant removeDiscount() {
         return this.changeCurrentPrice(this.basePrice);
     }
@@ -134,14 +119,12 @@ public record AnkletVariant(
     public AnkletVariant addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
-        // The constructor validation for non-empty materials ensures this is safe as long as the original set wasn't empty
         return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
     }
 
     public AnkletVariant removeMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         if (newMaterials.remove(material)) {
-            // Must re-validate that the resulting set is not empty before creating the new instance
             if (newMaterials.isEmpty()) {
                 throw new IllegalStateException("Anklet variant must have at least one material composition; cannot remove the last one.");
             }
@@ -157,21 +140,21 @@ public record AnkletVariant(
     // --- Lifecycle/Status Behavior Methods ---
 
     public boolean isActive() {
-        return this.status == VariantStatusVO.ACTIVE;
+        return this.status == VariantStatusEnums.ACTIVE;
     }
 
     public AnkletVariant activate() {
-        if (this.status == VariantStatusVO.DISCONTINUED) {
+        if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.ACTIVE);
+        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public AnkletVariant deactivate() {
-        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.INACTIVE);
+        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public AnkletVariant markAsDiscontinued() {
-        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusVO.DISCONTINUED);
+        return new AnkletVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }
