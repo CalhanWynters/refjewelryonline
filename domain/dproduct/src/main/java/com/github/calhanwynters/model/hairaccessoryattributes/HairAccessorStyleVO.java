@@ -25,12 +25,13 @@ public record HairAccessorStyleVO(
         Objects.requireNonNull(styles, "styles set must not be null");
 
         // Normalize and validate all styles in the input set
-
-        // Replace the input set with the normalized, immutable set
+        // The internal set will store ALL CAPS, with UNDERSCORES for consistency.
         styles = styles.stream()
                 .filter(Objects::nonNull)
                 .map(String::strip)
                 .map(String::toUpperCase)
+                // FIX 1: Replace spaces with underscores BEFORE validation/storage
+                .map(s -> s.replace(" ", "_"))
                 .filter(s -> !s.isEmpty())
                 .peek(style -> {
                     if (!VALID_STYLES.contains(style)) {
@@ -41,24 +42,14 @@ public record HairAccessorStyleVO(
     }
 
     // --- Factories ---
-
-    /**
-     * Creates a HairAccessorStyleVO from a single style string.
-     * @param style The single style name.
-     * @return A new HairAccessorStyleVO instance.
-     */
+    // ... (factories remain the same) ...
     public static HairAccessorStyleVO of(String style) {
         return new HairAccessorStyleVO(Set.of(style));
     }
-
-    /**
-     * Creates a HairAccessorStyleVO from multiple style strings.
-     * @param styles The set of style names.
-     * @return A new HairAccessorStyleVO instance.
-     */
     public static HairAccessorStyleVO of(Set<String> styles) {
         return new HairAccessorStyleVO(styles);
     }
+
 
     // --- Domain Behaviors ---
 
@@ -67,10 +58,14 @@ public record HairAccessorStyleVO(
      * @param style The style to check for.
      * @return true if the style is present (case-insensitive).
      */
+
     public boolean hasStyle(String style) {
         if (style == null || style.isBlank()) return false;
-        return this.styles.contains(style.strip().toUpperCase());
+
+        String normalizedCheck = style.strip().toUpperCase().replace(" ", "_");
+        return this.styles.contains(normalizedCheck);
     }
+
 
     /**
      * Returns a human-readable, comma-separated display name of the styles.
@@ -79,9 +74,9 @@ public record HairAccessorStyleVO(
     public String displayName() {
         return this.styles.stream()
                 .map(style -> {
-                    // Convert "HAIR_PIN" to "Hair Pin"
+                    // Convert "HAIR_PIN" to "Hair Pin" for display
                     String displayName = style.replace("_", " ");
-                    // Convert to Title Case
+                    // Convert to Title Case (only first letter of string is capitalized)
                     return displayName.charAt(0) + displayName.substring(1).toLowerCase();
                 })
                 .collect(Collectors.joining(", "));

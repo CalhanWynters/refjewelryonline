@@ -25,12 +25,12 @@ public record RingStyleVO(
         Objects.requireNonNull(styles, "styles set must not be null");
 
         // Normalize and validate all styles in the input set
-
-        // Replace the input set with the normalized, immutable set
         styles = styles.stream()
                 .filter(Objects::nonNull)
                 .map(String::strip)
                 .map(String::toUpperCase)
+                // Replace spaces with underscores BEFORE validation/storage
+                .map(s -> s.replace(" ", "_"))
                 .filter(s -> !s.isEmpty())
                 .peek(style -> {
                     if (!VALID_STYLES.contains(style)) {
@@ -42,20 +42,10 @@ public record RingStyleVO(
 
     // --- Factories ---
 
-    /**
-     * Creates a RingStyleVO from a single style string.
-     * @param style The single style name.
-     * @return A new RingStyleVO instance.
-     */
     public static RingStyleVO of(String style) {
         return new RingStyleVO(Set.of(style));
     }
 
-    /**
-     * Creates a RingStyleVO from multiple style strings.
-     * @param styles The set of style names.
-     * @return A new RingStyleVO instance.
-     */
     public static RingStyleVO of(Set<String> styles) {
         return new RingStyleVO(styles);
     }
@@ -69,7 +59,9 @@ public record RingStyleVO(
      */
     public boolean hasStyle(String style) {
         if (style == null || style.isBlank()) return false;
-        return this.styles.contains(style.strip().toUpperCase());
+        // Normalize the style we are checking against the internal storage format (CAPS + UNDERSCORES)
+        String normalizedCheck = style.strip().toUpperCase().replace(" ", "_");
+        return this.styles.contains(normalizedCheck);
     }
 
     /**
@@ -79,7 +71,7 @@ public record RingStyleVO(
     public String displayName() {
         return this.styles.stream()
                 .map(style -> {
-                    // Convert "CHANNEL_SET" to "Channel Set"
+                    // Convert "CHANNEL_SET" to "Channel Set" for display
                     String displayName = style.replace("_", " ");
                     // Convert to Title Case
                     return displayName.charAt(0) + displayName.substring(1).toLowerCase();
