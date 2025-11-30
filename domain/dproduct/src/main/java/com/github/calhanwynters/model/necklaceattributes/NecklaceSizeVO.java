@@ -27,8 +27,8 @@ public record NecklaceSizeVO(
             throw new IllegalArgumentException("lengthInches must be positive");
         }
 
-        // Normalize the internal length to a consistent scale
-        lengthInches = lengthInches.setScale(LENGTH_SCALE, RoundingMode.HALF_UP);
+        // Normalize the internal length to a consistent scale and strip zeros
+        lengthInches = lengthInches.setScale(LENGTH_SCALE, RoundingMode.HALF_UP).stripTrailingZeros();
     }
 
     // --- Factories ---
@@ -48,7 +48,8 @@ public record NecklaceSizeVO(
      * @return A new NecklaceSizeVO instance.
      */
     public static NecklaceSizeVO ofCentimeters(BigDecimal cm) {
-        BigDecimal inches = cm.multiply(INCHES_PER_CM);
+        // FIX: Set the scale immediately to ensure consistent precision across factories
+        BigDecimal inches = cm.multiply(INCHES_PER_CM).setScale(LENGTH_SCALE, RoundingMode.HALF_UP);
         return new NecklaceSizeVO(inches);
     }
 
@@ -67,7 +68,8 @@ public record NecklaceSizeVO(
      * @return The length in centimeters.
      */
     public BigDecimal inCentimeters() {
-        return lengthInches.divide(INCHES_PER_CM, LENGTH_SCALE, RoundingMode.HALF_UP);
+        // FIX: Strip trailing zeros from the result
+        return lengthInches.divide(INCHES_PER_CM, LENGTH_SCALE, RoundingMode.HALF_UP).stripTrailingZeros();
     }
 
     /**
@@ -75,14 +77,20 @@ public record NecklaceSizeVO(
      * @return An Optional containing the standard name, if applicable.
      */
     public Optional<String> getStandardLengthName() {
-        BigDecimal inches = lengthInches.setScale(0, RoundingMode.HALF_UP); // Round to nearest whole inch for comparison
+        // Use the normalized internal value (lengthInches) directly
+        BigDecimal inches = lengthInches;
+
+        // The logic uses exact comparison points. We must use compareTo and manage ranges carefully.
 
         if (inches.compareTo(BigDecimal.valueOf(14)) <= 0) return Optional.of("Collar");
-        if (inches.compareTo(BigDecimal.valueOf(16)) <= 0) return Optional.of("Choker");
-        if (inches.compareTo(BigDecimal.valueOf(18)) <= 0) return Optional.of("Princess");
-        if (inches.compareTo(BigDecimal.valueOf(20)) <= 0) return Optional.of("Matinee");
-        if (inches.compareTo(BigDecimal.valueOf(34)) <= 0) return Optional.of("Opera");
-        if (inches.compareTo(BigDecimal.valueOf(35)) > 0) return Optional.of("Rope/Lariat");
+        // FIX: Use exclusive lower bounds and inclusive upper bounds
+        if (inches.compareTo(BigDecimal.valueOf(14)) > 0 && inches.compareTo(BigDecimal.valueOf(16)) <= 0) return Optional.of("Choker");
+        if (inches.compareTo(BigDecimal.valueOf(16)) > 0 && inches.compareTo(BigDecimal.valueOf(18)) <= 0) return Optional.of("Princess");
+        if (inches.compareTo(BigDecimal.valueOf(18)) > 0 && inches.compareTo(BigDecimal.valueOf(20)) <= 0) return Optional.of("Matinee");
+        if (inches.compareTo(BigDecimal.valueOf(20)) > 0 && inches.compareTo(BigDecimal.valueOf(34)) <= 0) return Optional.of("Opera");
+
+        // FIX: Correct the final condition to check for anything strictly greater than 34 inches
+        if (inches.compareTo(BigDecimal.valueOf(34)) > 0) return Optional.of("Rope/Lariat");
 
         return Optional.empty(); // For custom/uncommon lengths
     }

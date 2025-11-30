@@ -5,18 +5,13 @@ import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
- * Domain value object representing a standardized ring size, using internal diameter in mm as the canonical representation.
- * - Immutable record, domain-only (no infra annotations/deps).
- * - Stores diameter in mm (BigDecimal for precision).
- * - Factories handle different sizing systems (US, UK/Aus, ISO).
- * - Provides conversions and comparison operations.
- */
 public record RingSizeVO(
         BigDecimal diameterMm // Canonical value: Internal diameter in millimeters (non-null, positive)
 ) {
     // Standard precision for diameter calculations
     private static final int DIAMETER_SCALE = 2;
+    // Define a small tolerance for comparing approximate sizes (inclusive check now)
+    private static final BigDecimal TOLERANCE = new BigDecimal("0.01"); // Allow a 0.01 deviation
 
     // Compact constructor with validation and normalization
     public RingSizeVO {
@@ -47,7 +42,7 @@ public record RingSizeVO(
      * @return A new RingSizeVO instance.
      */
     public static RingSizeVO ofUsSize(BigDecimal usSize) {
-        // Formula: Diameter = (US Size * 0.83) + 11.5 mm [4]
+        // Formula: Diameter = (US Size * 0.83) + 11.5 mm
         BigDecimal diameter = usSize.multiply(new BigDecimal("0.83"))
                 .add(new BigDecimal("11.5"));
         return new RingSizeVO(diameter);
@@ -60,7 +55,7 @@ public record RingSizeVO(
      * @return The approximate US size as a BigDecimal.
      */
     public BigDecimal toUsSize() {
-        // Formula: US Size = (Diameter - 11.5) / 0.83 [4]
+        // Formula: US Size = (Diameter - 11.5) / 0.83
         return diameterMm.subtract(new BigDecimal("11.5"))
                 .divide(new BigDecimal("0.83"), DIAMETER_SCALE, RoundingMode.HALF_UP);
     }
@@ -75,16 +70,17 @@ public record RingSizeVO(
 
     /**
      * Attempts to find the approximate official US alphabetical representation (e.g., "7", "7 1/2").
-     * This is a display helper and might not cover all half/quarter sizes perfectly.
-     * @return An Optional containing the US display string if a common size is found.
+     * Uses a tolerance check to handle inexact formulas.
+     * @return An Optional containing the US display string if a common size is found within tolerance.
      */
     public Optional<String> toUsDisplayString() {
-        // A simple lookup for common sizes based on calculated US numerical size
-        BigDecimal usSize = toUsSize().setScale(1, RoundingMode.HALF_UP);
-        if (usSize.compareTo(new BigDecimal("7.0")) == 0) return Optional.of("7");
-        if (usSize.compareTo(new BigDecimal("7.5")) == 0) return Optional.of("7 1/2");
-        if (usSize.compareTo(new BigDecimal("8.0")) == 0) return Optional.of("8");
-        // ... add more common sizes as needed ...
+        BigDecimal usSize = toUsSize(); // Use the calculated US size directly
+
+        // Use the private static helper method for comparisons
+        if (isApproximately(usSize, "7.0")) return Optional.of("7");
+        if (isApproximately(usSize, "7.5")) return Optional.of("7 1/2");
+        if (isApproximately(usSize, "8.0")) return Optional.of("8");
+
         return Optional.empty();
     }
 
@@ -98,5 +94,16 @@ public record RingSizeVO(
      */
     public int compareTo(RingSizeVO other) {
         return this.diameterMm.compareTo(other.diameterMm);
+    }
+
+    /**
+     * Helper to check if the calculated size is within tolerance of a standard size.
+     * This replaces the invalid inner method syntax.
+     */
+    private static boolean isApproximately(BigDecimal calculated, String standard) {
+        BigDecimal standardBD = new BigDecimal(standard);
+        // Check if the absolute difference is less than OR EQUAL TO the tolerance
+        // compareTo returns 0 if equal, -1 if less than. We want both.
+        return calculated.subtract(standardBD).abs().compareTo(TOLERANCE) <= 0;
     }
 }

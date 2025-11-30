@@ -30,7 +30,32 @@ public record EarringSizeVO(
 
         // Normalize the internal size to a consistent scale
         sizeMm = sizeMm.setScale(SIZE_SCALE, RoundingMode.HALF_UP).stripTrailingZeros();
+
+        // FIX #2: If the number is an integer (scale is now 0 or negative), force scale to 0 for consistency
+        if (sizeMm.scale() < 0) {
+            // Use a rounding mode to satisfy static analysis tools, though it's technically redundant here
+            // since stripTrailingZeros ensures the value is exact.
+            sizeMm = sizeMm.setScale(0, RoundingMode.UNNECESSARY);
+        }
+
         label = normalizeLabel(label);
+    }
+
+    // FIX #1: Override equals/hashCode to use ONLY the canonical value (sizeMm), ignoring the label
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EarringSizeVO that = (EarringSizeVO) o;
+        // Compare the underlying BigDecimal values numerically
+        return sizeMm.compareTo(that.sizeMm) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        // Hash only the canonical value
+        // Use stripTrailingZeros() for hash consistency of numerically equal BigDecimals (e.g., 10.0 vs 10)
+        return Objects.hash(sizeMm.stripTrailingZeros());
     }
 
     // --- Factories ---
