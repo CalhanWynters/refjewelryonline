@@ -19,6 +19,7 @@ public record EarringVariant(
         EarringStyleVO style,
         MonetaryAmount basePrice,
         MonetaryAmount currentPrice,
+        WeightVO weight,  // Added weight property
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
@@ -33,6 +34,7 @@ public record EarringVariant(
         Objects.requireNonNull(style, "style must not be null");
         Objects.requireNonNull(basePrice, "basePrice must not be null");
         Objects.requireNonNull(currentPrice, "currentPrice must not be null");
+        Objects.requireNonNull(weight, "weight must not be null");  // Validate weight
         Objects.requireNonNull(materials, "materials must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
         Objects.requireNonNull(careInstructions, "careInstructions must not be null");
@@ -57,6 +59,7 @@ public record EarringVariant(
             EarringSizeVO size,
             EarringStyleVO style,
             MonetaryAmount basePrice,
+            WeightVO weight,  // Added weight parameter
             Set<MaterialCompositionVO> materials,
             CareInstructionVO careInstructions
     ) {
@@ -69,7 +72,8 @@ public record EarringVariant(
                 size,
                 style,
                 basePrice,
-                basePrice,
+                basePrice, // current price starts the same as base price
+                weight,  // Set weight
                 materials,
                 Set.of(), // No gemstones initially
                 careInstructions,
@@ -86,6 +90,7 @@ public record EarringVariant(
         }
         return Objects.equals(this.size, otherEarring.size()) &&
                 Objects.equals(this.style, otherEarring.style()) &&
+                Objects.equals(this.weight, otherEarring.weight()) &&  // Include weight in comparison
                 Objects.equals(this.materials, otherEarring.materials()) &&
                 Objects.equals(this.gemstones, otherEarring.gemstones()) &&
                 Objects.equals(this.careInstructions, otherEarring.careInstructions());
@@ -94,11 +99,11 @@ public record EarringVariant(
     // --- Behavior Methods ---
 
     public EarringVariant changeBasePrice(MonetaryAmount newBasePrice) {
-        return new EarringVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.materials, this.gemstones, this.careInstructions, this.status);
+        return new EarringVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.weight, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
     public EarringVariant changeCurrentPrice(MonetaryAmount newCurrentPrice) {
-        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.materials, this.gemstones, this.careInstructions, this.status);
+        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
     public EarringVariant applyDiscount(PercentageVO discount) {
@@ -113,13 +118,13 @@ public record EarringVariant(
     public EarringVariant addGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         newGemstones.add(gemstone);
-        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
+        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, newGemstones, this.careInstructions, this.status);
     }
 
     public EarringVariant removeGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         if (newGemstones.remove(gemstone)) {
-            return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
+            return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, newGemstones, this.careInstructions, this.status);
         }
         return this;
     }
@@ -127,7 +132,7 @@ public record EarringVariant(
     public EarringVariant addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
-        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
+        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, newMaterials, this.gemstones, this.careInstructions, this.status);
     }
 
     public EarringVariant removeMaterial(MaterialCompositionVO material) {
@@ -136,13 +141,13 @@ public record EarringVariant(
             if (newMaterials.isEmpty()) {
                 throw new IllegalStateException("Earring variant must have at least one material composition; cannot remove the last one.");
             }
-            return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
+            return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, newMaterials, this.gemstones, this.careInstructions, this.status);
         }
         return this;
     }
 
     public EarringVariant changeCareInstructions(CareInstructionVO newInstructions) {
-        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, newInstructions, this.status);
+        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, newInstructions, this.status);
     }
 
     // --- Lifecycle/Status Behavior Methods ---
@@ -155,14 +160,15 @@ public record EarringVariant(
         if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
+        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public EarringVariant deactivate() {
-        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
+        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public EarringVariant markAsDiscontinued() {
-        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
+        return new EarringVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }
+

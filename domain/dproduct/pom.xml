@@ -18,6 +18,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Centralize JavaMoney API version -->
         <javamoney-api.version>1.1</javamoney-api.version>
+        <javamoney-moneta.version>1.4.3</javamoney-moneta.version>
     </properties>
 
     <dependencies>
@@ -26,6 +27,15 @@
             <groupId>javax.money</groupId>
             <artifactId>money-api</artifactId>
             <version>${javamoney-api.version}</version>
+        </dependency>
+        <!-- JavaMoney Implementation (Moneta) - Only required for tests in this module -->
+        <dependency>
+            <!-- https://mvnrepository.com/artifact/org.javamoney/moneta -->
+            <groupId>org.javamoney</groupId>
+            <artifactId>moneta</artifactId>
+            <version>1.4.5</version>
+            <type>pom</type>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

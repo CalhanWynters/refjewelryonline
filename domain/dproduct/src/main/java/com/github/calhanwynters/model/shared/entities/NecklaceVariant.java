@@ -19,6 +19,7 @@ public record NecklaceVariant(
         NecklaceStyleVO style,
         MonetaryAmount basePrice,
         MonetaryAmount currentPrice,
+        WeightVO weight,  // Added weight property
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
@@ -33,6 +34,7 @@ public record NecklaceVariant(
         Objects.requireNonNull(style, "style must not be null");
         Objects.requireNonNull(basePrice, "basePrice must not be null");
         Objects.requireNonNull(currentPrice, "currentPrice must not be null");
+        Objects.requireNonNull(weight, "weight must not be null");  // Validate weight
         Objects.requireNonNull(materials, "materials must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
         Objects.requireNonNull(careInstructions, "careInstructions must not be null");
@@ -57,6 +59,7 @@ public record NecklaceVariant(
             NecklaceSizeVO size,
             NecklaceStyleVO style,
             MonetaryAmount basePrice,
+            WeightVO weight,  // Added weight parameter
             Set<MaterialCompositionVO> materials,
             CareInstructionVO careInstructions
     ) {
@@ -70,6 +73,7 @@ public record NecklaceVariant(
                 style,
                 basePrice,
                 basePrice, // current price starts the same as base price
+                weight,  // Set weight
                 materials,
                 Set.of(), // No gemstones initially
                 careInstructions,
@@ -88,17 +92,18 @@ public record NecklaceVariant(
                 Objects.equals(this.style, otherNecklace.style()) &&
                 Objects.equals(this.materials, otherNecklace.materials()) &&
                 Objects.equals(this.gemstones, otherNecklace.gemstones()) &&
-                Objects.equals(this.careInstructions, otherNecklace.careInstructions());
+                Objects.equals(this.careInstructions, otherNecklace.careInstructions()) &&
+                Objects.equals(this.weight, otherNecklace.weight());  // Include weight in comparison
     }
 
     // --- Behavior Methods ---
 
     public NecklaceVariant changeBasePrice(MonetaryAmount newBasePrice) {
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.materials, this.gemstones, this.careInstructions, this.status);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.weight, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
     public NecklaceVariant changeCurrentPrice(MonetaryAmount newCurrentPrice) {
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.materials, this.gemstones, this.careInstructions, this.status);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
     public NecklaceVariant applyDiscount(PercentageVO discount) {
@@ -113,13 +118,13 @@ public record NecklaceVariant(
     public NecklaceVariant addGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         newGemstones.add(gemstone);
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, newGemstones, this.careInstructions, this.status);
     }
 
     public NecklaceVariant removeGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         if (newGemstones.remove(gemstone)) {
-            return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
+            return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, newGemstones, this.careInstructions, this.status);
         }
         return this;
     }
@@ -127,7 +132,7 @@ public record NecklaceVariant(
     public NecklaceVariant addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, newMaterials, this.gemstones, this.careInstructions, this.status);
     }
 
     public NecklaceVariant removeMaterial(MaterialCompositionVO material) {
@@ -136,13 +141,13 @@ public record NecklaceVariant(
             if (newMaterials.isEmpty()) {
                 throw new IllegalStateException("Necklace variant must have at least one material composition; cannot remove the last one.");
             }
-            return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
+            return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, newMaterials, this.gemstones, this.careInstructions, this.status);
         }
         return this;
     }
 
     public NecklaceVariant changeCareInstructions(CareInstructionVO newInstructions) {
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, newInstructions, this.status);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, newInstructions, this.status);
     }
 
     // --- Lifecycle/Status Behavior Methods ---
@@ -155,14 +160,15 @@ public record NecklaceVariant(
         if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public NecklaceVariant deactivate() {
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public NecklaceVariant markAsDiscontinued() {
-        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
+        return new NecklaceVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }
+
