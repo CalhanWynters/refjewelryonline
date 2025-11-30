@@ -12,109 +12,111 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class NecklaceSizeVOTest {
 
-    // Helper method for BigDecimal comparison in tests
+    // Helper for numerical equality (ignores scale)
     private void assertBigDecimalEquals(String expected, BigDecimal actual) {
-        // We strip trailing zeros before comparison to handle normalization differences (e.g., 10.00 vs 10)
-        assertEquals(0, new BigDecimal(expected).compareTo(actual.stripTrailingZeros()),
-                "BigDecimal values should be numerically equal");
+        assertEquals(0,
+                new BigDecimal(expected).compareTo(actual),
+                "Numerical values differ: expected=" + expected + ", actual=" + actual);
     }
 
-    // --- Constructor and Validation Tests ---
+    // --- Constructor & Validation ---
 
     @Test
     void testConstructorRequiresNonNull() {
-        NullPointerException thrownNull = assertThrows(NullPointerException.class, () -> new NecklaceSizeVO(null));
-        assertTrue(thrownNull.getMessage().contains("lengthInches must not be null"));
+        NullPointerException ex = assertThrows(NullPointerException.class,
+                () -> new NecklaceSizeVO(null));
+        assertTrue(ex.getMessage().contains("lengthInches must not be null"));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"0.0", "-1.0", "-0.01"})
-    void testConstructorRequiresPositiveLength(String invalidSize) {
-        BigDecimal size = new BigDecimal(invalidSize);
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> NecklaceSizeVO.ofInches(size));
-        assertTrue(thrown.getMessage().contains("lengthInches must be positive"));
+    void testConstructorRequiresPositive(String invalid) {
+        BigDecimal bd = new BigDecimal(invalid);
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> NecklaceSizeVO.ofInches(bd));
+        assertTrue(ex.getMessage().contains("lengthInches must be positive"));
     }
 
     @Test
-    void testInternalNormalization() {
-        // Ensure internal storage is scaled to 2 decimal places exactly as defined in the VO logic
+    void testNormalizationScale() {
         NecklaceSizeVO vo = NecklaceSizeVO.ofInches(new BigDecimal("18.129"));
         assertBigDecimalEquals("18.13", vo.inInches());
         assertEquals(2, vo.inInches().scale());
     }
 
-    // --- Factory Method Tests ---
+    // --- Factory Methods ---
 
     @Test
-    void testOfInchesFactory() {
+    void testOfInches() {
         NecklaceSizeVO vo = NecklaceSizeVO.ofInches(new BigDecimal("20.5"));
-        assertBigDecimalEquals("20.5", vo.inInches());
+        assertBigDecimalEquals("20.50", vo.inInches());
+        assertEquals(2, vo.inInches().scale());
     }
 
     @Test
-    void testOfCentimetersFactoryConversion() {
-        // 45.72 cm should be approximately 18 inches
-        BigDecimal cmInput = new BigDecimal("45.72");
-        NecklaceSizeVO vo = NecklaceSizeVO.ofCentimeters(cmInput);
-
-        // FIX: The VO factory now scales immediately to 2 decimal places.
-        // 45.72 cm converts to exactly 18.00 inches in the new logic.
+    void testOfCentimeters() {
+        // 45.72 cm ↔ exactly 18.00 in with our constant & rounding
+        NecklaceSizeVO vo = NecklaceSizeVO.ofCentimeters(new BigDecimal("45.72"));
         assertBigDecimalEquals("18.00", vo.inInches());
+        assertEquals(2, vo.inInches().scale());
     }
 
-    // --- Conversion Method Tests ---
+    // --- Conversions ---
 
     @Test
-    void testInCentimetersConversion() {
-        // 18 inches converted to CM (approx 45.72 cm)
+    void testInCentimeters() {
         NecklaceSizeVO vo = NecklaceSizeVO.ofInches(new BigDecimal("18"));
-
-        // 18 / 0.393701 approx 45.72
+        // 18 in → 45.72 cm (scaled to 2 decimals)
         assertBigDecimalEquals("45.72", vo.inCentimeters());
     }
 
-    // --- Business Logic (Standard Name) Tests ---
+    // --- Standard Necklace Range Classification ---
 
-    // Use parameterized tests for standard ranges, checking the rounding behavior
     @ParameterizedTest
     @CsvSource({
+            // Collar
             "13.5, Collar",
             "14.0, Collar",
+            // Choker
             "14.1, Choker",
             "15.9, Choker",
             "16.0, Choker",
+            // Princess
             "16.1, Princess",
             "18.0, Princess",
-            "18.1, Matinee", // FIX: Boundary check updated to match revised VO logic (exclusive lower bound)
+            // Matinee
+            "18.1, Matinee",
             "20.0, Matinee",
-            "20.1, Opera",   // FIX: Boundary check updated
+            // Opera
+            "20.1, Opera",
             "34.0, Opera",
-            "34.1, Rope/Lariat", // FIX: Boundary check updated
+            // Rope/Lariat
+            "34.1, Rope/Lariat",
             "36.0, Rope/Lariat",
             "40.0, Rope/Lariat"
     })
-    void testGetStandardLengthName(BigDecimal inches, String expectedName) {
+    void testGetStandardLengthName(BigDecimal inches, String expected) {
         NecklaceSizeVO vo = NecklaceSizeVO.ofInches(inches);
         Optional<String> result = vo.getStandardLengthName();
-        assertTrue(result.isPresent(), "Should have a standard name for value: " + inches + " Actual lengthInches: " + vo.inInches());
-        assertEquals(expectedName, result.get());
+
+        assertTrue(result.isPresent(),
+                "Expected a standard name for " + inches + " but got empty.");
+        assertEquals(expected, result.get());
     }
 
-    // --- Comparison Tests ---
+    // --- Comparison ---
 
     @Test
-    void testCompareToEquality() {
-        NecklaceSizeVO size1 = NecklaceSizeVO.ofInches(new BigDecimal("18.0"));
-        // 45.72 cm is now exactly 18.00 inches in the revised factory logic
-        NecklaceSizeVO size2 = NecklaceSizeVO.ofCentimeters(new BigDecimal("45.72"));
+    void testCompareToEqual() {
+        NecklaceSizeVO a = NecklaceSizeVO.ofInches(new BigDecimal("18.0"));
+        NecklaceSizeVO b = NecklaceSizeVO.ofCentimeters(new BigDecimal("45.72"));
 
-        // They should be exactly equal now due to consistent normalization in factories
-        assertEquals(0, size1.compareTo(size2));
-        assertEquals(0, size2.compareTo(size1));
+        assertEquals(0, a.compareTo(b));
+        assertEquals(0, b.compareTo(a));
     }
 
     @Test
-    void testCompareToGreaterAndLess() {
+    void testCompareToOrdering() {
         NecklaceSizeVO small = NecklaceSizeVO.ofInches(new BigDecimal("16.0"));
         NecklaceSizeVO large = NecklaceSizeVO.ofInches(new BigDecimal("20.0"));
 
@@ -122,14 +124,14 @@ class NecklaceSizeVOTest {
         assertTrue(large.compareTo(small) > 0);
     }
 
-    // --- Value Object Contract Tests (equals/hashCode) ---
+    // --- Equals / HashCode Contract ---
 
     @Test
-    void testEqualsAndHashCodeConsistency() {
-        NecklaceSizeVO size1 = NecklaceSizeVO.ofInches(new BigDecimal("18.00"));
-        NecklaceSizeVO size2 = NecklaceSizeVO.ofInches(new BigDecimal("18.0"));
+    void testEqualsAndHashCode() {
+        NecklaceSizeVO a = NecklaceSizeVO.ofInches(new BigDecimal("18.00"));
+        NecklaceSizeVO b = NecklaceSizeVO.ofInches(new BigDecimal("18.0"));
 
-        assertEquals(size1, size2, "VOs with same canonical value should be equal");
-        assertEquals(size1.hashCode(), size2.hashCode(), "Equal VOs must have equal hash codes");
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
     }
 }

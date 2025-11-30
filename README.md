@@ -12,4 +12,7 @@ Add JavaMoney Library individually to each service module that needs it.
 on dproduct.model.entities each of the polymorphed variant classes has duplicate lines on the method 
 "hasSameAttributes". Could use some optimization.
 
+I need to implement enums for ring sizes as there are floating point regional standards to use.
+All other jewelry sizes can continue using BigDecimal.
+
 
