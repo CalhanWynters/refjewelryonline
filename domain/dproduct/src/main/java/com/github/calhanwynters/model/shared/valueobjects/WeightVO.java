@@ -15,31 +15,45 @@ public record WeightVO(
 
     // Centralized constant for maximum allowed weight in grams (e.g., 100 kg)
     private static final BigDecimal MAX_GRAMS = new BigDecimal("100000.0");
+    private static final String AMOUNT_CANNOT_BE_NULL = "Amount must not be null";
+    private static final String UNIT_CANNOT_BE_NULL = "Unit must not be null";
+    private static final String AMOUNT_CANNOT_BE_NEGATIVE = "Amount must not be negative";
+    private static final String EXCEEDED_MAX_WEIGHT = "Amount exceeds maximum allowed weight";
 
     // Compact constructor for validation and normalization
     public WeightVO {
-        Objects.requireNonNull(amount, "amount must not be null");
-        Objects.requireNonNull(unit, "unit must not be null");
+        Objects.requireNonNull(amount, AMOUNT_CANNOT_BE_NULL);
+        Objects.requireNonNull(unit, UNIT_CANNOT_BE_NULL);
         if (amount.signum() < 0) {
-            throw new IllegalArgumentException("amount must not be negative");
+            throw new IllegalArgumentException(AMOUNT_CANNOT_BE_NEGATIVE);
         }
         // Normalize the input amount using the unit's defined scale and rounding
         amount = amount.setScale(WeightUnit.SCALE, WeightUnit.ROUNDING_MODE).stripTrailingZeros();
 
         // Validate total weight against maximum allowed
         if (unit.toGrams(amount).compareTo(MAX_GRAMS) > 0) {
-            throw new IllegalArgumentException("amount exceeds maximum allowed weight");
+            throw new IllegalArgumentException(EXCEEDED_MAX_WEIGHT);
         }
     }
 
-    // Factories
-    public static WeightVO ofGrams(BigDecimal grams) { return new WeightVO(grams, WeightUnit.GRAM); }
-    public static WeightVO ofOunces(BigDecimal ounces) { return new WeightVO(ounces, WeightUnit.OUNCE); }
-    public static WeightVO ofTroyOunces(BigDecimal troyOunces) { return new WeightVO(troyOunces, WeightUnit.TROY_OUNCE); }
-    public static WeightVO ofCarats(BigDecimal carats) { return new WeightVO(carats, WeightUnit.CARAT); }
+    // Factory methods
+    public static WeightVO ofGrams(BigDecimal grams) {
+        return new WeightVO(grams, WeightUnit.GRAM);
+    }
 
+    public static WeightVO ofOunces(BigDecimal ounces) {
+        return new WeightVO(ounces, WeightUnit.OUNCE);
+    }
 
-    // Accessors / conversions (use the unit's methods, applying consistent final scaling)
+    public static WeightVO ofTroyOunces(BigDecimal troyOunces) {
+        return new WeightVO(troyOunces, WeightUnit.TROY_OUNCE);
+    }
+
+    public static WeightVO ofCarats(BigDecimal carats) {
+        return new WeightVO(carats, WeightUnit.CARAT);
+    }
+
+    // Convert to grams
     public BigDecimal inGrams() {
         return unit.toGrams(amount)
                 .setScale(WeightUnit.SCALE, WeightUnit.ROUNDING_MODE)
@@ -58,25 +72,29 @@ public record WeightVO(
         return new WeightVO(resultInTargetUnit, targetUnit);
     }
 
-    // Domain operations (immutably return new instances in canonical GRAM unit for arithmetic)
+    // Domain operations
     public WeightVO add(WeightVO other) {
-        Objects.requireNonNull(other);
+        Objects.requireNonNull(other, "Other WeightVO must not be null");
         BigDecimal totalGrams = this.inGrams().add(other.inGrams());
-        // Return a new VO, which applies validation and normalization in its constructor
+
+        if (totalGrams.compareTo(MAX_GRAMS) > 0) {
+            throw new IllegalArgumentException(EXCEEDED_MAX_WEIGHT);
+        }
+
         return WeightVO.ofGrams(totalGrams);
     }
 
     public WeightVO subtract(WeightVO other) {
-        Objects.requireNonNull(other);
+        Objects.requireNonNull(other, "Other WeightVO must not be null");
         BigDecimal resultGrams = this.inGrams().subtract(other.inGrams());
+
         if (resultGrams.signum() < 0) {
-            throw new IllegalArgumentException("resulting weight must not be negative");
+            throw new IllegalArgumentException("Resulting weight must not be negative");
         }
-        // Return a new VO, which applies validation and normalization in its constructor
+
         return WeightVO.ofGrams(resultGrams);
     }
 
-    // Standard comparison based on canonical unit (grams)
     @Override
     public int compareTo(WeightVO other) {
         return this.inGrams().compareTo(other.inGrams());
@@ -87,11 +105,10 @@ public record WeightVO(
      */
     public enum WeightUnit {
         GRAM(BigDecimal.ONE),
-        OUNCE(new BigDecimal("28.349523125")), // Avoirdupois Ounce (general goods)
-        TROY_OUNCE(new BigDecimal("31.1034768")), // Troy Ounce (precious metals)
-        CARAT(new BigDecimal("0.2")); // Metric Carat (gemstones)
+        OUNCE(new BigDecimal("28.349523125")),
+        TROY_OUNCE(new BigDecimal("31.1034768")),
+        CARAT(new BigDecimal("0.2"));
 
-        // Centralized precision constants for the entire WeightVO system
         public static final int SCALE = 4;
         public static final RoundingMode ROUNDING_MODE = RoundingMode.HALF_UP;
 
@@ -103,17 +120,31 @@ public record WeightVO(
 
         /**
          * Converts a value in this unit to grams.
-         * Note: Does not apply final rounding/scaling.
+         *
+         * @param value The value in the current unit.
+         * @return The value in grams.
          */
         public BigDecimal toGrams(BigDecimal value) {
+            Objects.requireNonNull(value, "Value must not be null");
+            if (value.signum() < 0) {
+                throw new IllegalArgumentException("Value must not be negative");
+            }
             return value.multiply(gramsPerUnit);
         }
 
         /**
-         * Converts a value in grams to this unit, applying the defined SCALE and ROUNDING_MODE.
+         * Converts a value in grams to this unit.
+         *
+         * @param grams The value in grams.
+         * @return The value in the current unit, rounded to the defined SCALE.
          */
         public BigDecimal fromGrams(BigDecimal grams) {
-            return grams.divide(gramsPerUnit, SCALE, ROUNDING_MODE);
+            Objects.requireNonNull(grams, "Grams must not be null");
+            if (grams.signum() < 0) {
+                throw new IllegalArgumentException("Grams must not be negative");
+            }
+            return grams.divide(gramsPerUnit, SCALE, ROUNDING_MODE).stripTrailingZeros();
         }
     }
 }
+

@@ -19,6 +19,7 @@ public record HairAccessoryVariant(
         HairAccessorStyleVO style,
         MonetaryAmount basePrice,
         MonetaryAmount currentPrice,
+        WeightVO weight,  // Added weight property
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
@@ -33,6 +34,7 @@ public record HairAccessoryVariant(
         Objects.requireNonNull(style, "style must not be null");
         Objects.requireNonNull(basePrice, "basePrice must not be null");
         Objects.requireNonNull(currentPrice, "currentPrice must not be null");
+        Objects.requireNonNull(weight, "weight must not be null");  // Validate weight
         Objects.requireNonNull(materials, "materials must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
         Objects.requireNonNull(careInstructions, "careInstructions must not be null");
@@ -57,6 +59,7 @@ public record HairAccessoryVariant(
             HairAccessorySizeVO size,
             HairAccessorStyleVO style,
             MonetaryAmount basePrice,
+            WeightVO weight,  // Added weight parameter
             Set<MaterialCompositionVO> materials,
             CareInstructionVO careInstructions
     ) {
@@ -70,6 +73,7 @@ public record HairAccessoryVariant(
                 style,
                 basePrice,
                 basePrice, // current price starts the same as base price
+                weight,  // Set weight
                 materials,
                 Set.of(), // No gemstones initially
                 careInstructions,
@@ -86,6 +90,7 @@ public record HairAccessoryVariant(
         }
         return Objects.equals(this.size, otherHairAccessory.size()) &&
                 Objects.equals(this.style, otherHairAccessory.style()) &&
+                Objects.equals(this.weight, otherHairAccessory.weight()) &&  // Include weight in comparison
                 Objects.equals(this.materials, otherHairAccessory.materials()) &&
                 Objects.equals(this.gemstones, otherHairAccessory.gemstones()) &&
                 Objects.equals(this.careInstructions, otherHairAccessory.careInstructions());
@@ -94,11 +99,11 @@ public record HairAccessoryVariant(
     // --- Behavior Methods ---
 
     public HairAccessoryVariant changeBasePrice(MonetaryAmount newBasePrice) {
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.materials, this.gemstones, this.careInstructions, this.status);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.weight, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
     public HairAccessoryVariant changeCurrentPrice(MonetaryAmount newCurrentPrice) {
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.materials, this.gemstones, this.careInstructions, this.status);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
     public HairAccessoryVariant applyDiscount(PercentageVO discount) {
@@ -113,13 +118,13 @@ public record HairAccessoryVariant(
     public HairAccessoryVariant addGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         newGemstones.add(gemstone);
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, newGemstones, this.careInstructions, this.status);
     }
 
     public HairAccessoryVariant removeGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         if (newGemstones.remove(gemstone)) {
-            return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
+            return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, newGemstones, this.careInstructions, this.status);
         }
         return this;
     }
@@ -127,7 +132,7 @@ public record HairAccessoryVariant(
     public HairAccessoryVariant addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, newMaterials, this.gemstones, this.careInstructions, this.status);
     }
 
     public HairAccessoryVariant removeMaterial(MaterialCompositionVO material) {
@@ -136,13 +141,13 @@ public record HairAccessoryVariant(
             if (newMaterials.isEmpty()) {
                 throw new IllegalStateException("Hair accessory variant must have at least one material composition; cannot remove the last one.");
             }
-            return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
+            return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, newMaterials, this.gemstones, this.careInstructions, this.status);
         }
         return this;
     }
 
     public HairAccessoryVariant changeCareInstructions(CareInstructionVO newInstructions) {
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, newInstructions, this.status);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, newInstructions, this.status);
     }
 
     // --- Lifecycle/Status Behavior Methods ---
@@ -155,14 +160,15 @@ public record HairAccessoryVariant(
         if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public HairAccessoryVariant deactivate() {
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public HairAccessoryVariant markAsDiscontinued() {
-        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
+        return new HairAccessoryVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }
+

@@ -8,6 +8,7 @@ import com.github.calhanwynters.model.shared.valueobjects.GemstoneVO;
 import com.github.calhanwynters.model.shared.valueobjects.MaterialCompositionVO;
 import com.github.calhanwynters.model.shared.valueobjects.PercentageVO;
 import com.github.calhanwynters.model.shared.valueobjects.VariantId;
+import com.github.calhanwynters.model.shared.valueobjects.WeightVO;  // Importing WeightVO
 
 // Import JavaMoney interfaces
 import javax.money.MonetaryAmount;
@@ -23,6 +24,7 @@ public record RingVariant(
         RingStyleVO style,
         MonetaryAmount basePrice,
         MonetaryAmount currentPrice,
+        WeightVO weight,  // Added weight property
         Set<MaterialCompositionVO> materials,
         Set<GemstoneVO> gemstones,
         CareInstructionVO careInstructions,
@@ -37,6 +39,7 @@ public record RingVariant(
         Objects.requireNonNull(style, "style must not be null");
         Objects.requireNonNull(basePrice, "basePrice must not be null");
         Objects.requireNonNull(currentPrice, "currentPrice must not be null");
+        Objects.requireNonNull(weight, "weight must not be null");  // Validate weight
         Objects.requireNonNull(materials, "materials must not be null");
         Objects.requireNonNull(gemstones, "gemstones must not be null");
         Objects.requireNonNull(careInstructions, "careInstructions must not be null");
@@ -61,6 +64,7 @@ public record RingVariant(
             RingSizeVO size,
             RingStyleVO style,
             MonetaryAmount basePrice,
+            WeightVO weight,  // Added weight parameter
             Set<MaterialCompositionVO> materials,
             CareInstructionVO careInstructions
     ) {
@@ -74,6 +78,7 @@ public record RingVariant(
                 style,
                 basePrice,
                 basePrice, // current price starts the same as base price
+                weight,  // Set weight
                 materials,
                 Set.of(), // No gemstones initially
                 careInstructions,
@@ -92,17 +97,18 @@ public record RingVariant(
                 Objects.equals(this.style, otherRing.style()) &&
                 Objects.equals(this.materials, otherRing.materials()) &&
                 Objects.equals(this.gemstones, otherRing.gemstones()) &&
-                Objects.equals(this.careInstructions, otherRing.careInstructions());
+                Objects.equals(this.careInstructions, otherRing.careInstructions()) &&
+                Objects.equals(this.weight, otherRing.weight());  // Include weight in comparison
     }
 
     // --- Behavior Methods ---
 
     public RingVariant changeBasePrice(MonetaryAmount newBasePrice) {
-        return new RingVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.materials, this.gemstones, this.careInstructions, this.status);
+        return new RingVariant(this.id, this.sku, this.size, this.style, newBasePrice, newBasePrice, this.weight, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
     public RingVariant changeCurrentPrice(MonetaryAmount newCurrentPrice) {
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, newCurrentPrice, this.materials, this.gemstones, this.careInstructions, this.status);
+        return new RingVariant(this.id, this.sku, this.size, this.style,         this.basePrice, newCurrentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, this.status);
     }
 
     public RingVariant applyDiscount(PercentageVO discount) {
@@ -117,13 +123,13 @@ public record RingVariant(
     public RingVariant addGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         newGemstones.add(gemstone);
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, newGemstones, this.careInstructions, this.status);
     }
 
     public RingVariant removeGemstone(GemstoneVO gemstone) {
         Set<GemstoneVO> newGemstones = new HashSet<>(this.gemstones);
         if (newGemstones.remove(gemstone)) {
-            return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, newGemstones, this.careInstructions, this.status);
+            return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, newGemstones, this.careInstructions, this.status);
         }
         return this;
     }
@@ -131,7 +137,7 @@ public record RingVariant(
     public RingVariant addMaterial(MaterialCompositionVO material) {
         Set<MaterialCompositionVO> newMaterials = new HashSet<>(this.materials);
         newMaterials.add(material);
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, newMaterials, this.gemstones, this.careInstructions, this.status);
     }
 
     public RingVariant removeMaterial(MaterialCompositionVO material) {
@@ -140,13 +146,13 @@ public record RingVariant(
             if (newMaterials.isEmpty()) {
                 throw new IllegalStateException("Ring variant must have at least one material composition; cannot remove the last one.");
             }
-            return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, newMaterials, this.gemstones, this.careInstructions, this.status);
+            return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, newMaterials, this.gemstones, this.careInstructions, this.status);
         }
         return this;
     }
 
     public RingVariant changeCareInstructions(CareInstructionVO newInstructions) {
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, newInstructions, this.status);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, newInstructions, this.status);
     }
 
     // --- Lifecycle/Status Behavior Methods ---
@@ -159,14 +165,15 @@ public record RingVariant(
         if (this.status == VariantStatusEnums.DISCONTINUED) {
             throw new IllegalStateException("Cannot activate a discontinued variant.");
         }
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.ACTIVE);
     }
 
     public RingVariant deactivate() {
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.INACTIVE);
     }
 
     public RingVariant markAsDiscontinued() {
-        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
+        return new RingVariant(this.id, this.sku, this.size, this.style, this.basePrice, this.currentPrice, this.weight, this.materials, this.gemstones, this.careInstructions, VariantStatusEnums.DISCONTINUED);
     }
 }
+

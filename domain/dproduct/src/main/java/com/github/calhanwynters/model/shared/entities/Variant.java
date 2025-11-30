@@ -3,7 +3,7 @@ package com.github.calhanwynters.model.shared.entities;
 import com.github.calhanwynters.model.shared.enums.VariantStatusEnums;
 import com.github.calhanwynters.model.shared.valueobjects.*;
 
-import javax.money.MonetaryAmount; // Import the standard API interface
+import javax.money.MonetaryAmount;
 import java.util.Set;
 
 public interface Variant {
@@ -11,12 +11,12 @@ public interface Variant {
     String sku();
 
     MonetaryAmount basePrice();
-
     MonetaryAmount currentPrice();
 
     CareInstructionVO careInstructions();
     Set<MaterialCompositionVO> materials();
     Set<GemstoneVO> gemstones();
+    WeightVO weight();  // Added weight method
     VariantStatusEnums status();
 
     /**

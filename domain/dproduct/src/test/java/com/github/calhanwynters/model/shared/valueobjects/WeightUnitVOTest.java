@@ -2,8 +2,8 @@ package com.github.calhanwynters.model.shared.valueobjects;
 
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test class for the WeightUnitVO enum to verify conversion logic and precision.
@@ -23,7 +23,7 @@ public class WeightUnitVOTest {
         assertNotNull(WeightUnitVO.GRAM);
         assertNotNull(WeightUnitVO.OUNCE);
         assertNotNull(WeightUnitVO.CARAT);
-        assertNotNull(WeightUnitVO.TROY_OUNCE); // Check for the new constant
+        assertNotNull(WeightUnitVO.TROY_OUNCE);
     }
 
     @Test
@@ -42,7 +42,7 @@ public class WeightUnitVOTest {
         BigDecimal actualCarat = WeightUnitVO.GRAM.convertValueTo(value, WeightUnitVO.CARAT);
         assertEqualsBigDecimal("GRAM to CARAT conversion failed", expectedCarat, actualCarat);
 
-        // GRAM to TROY_OUNCE: Using the exact 'but was' value from the last test run: 3.23115003
+        // GRAM to TROY_OUNCE
         BigDecimal expectedTroyOunce = new BigDecimal("3.23115003");
         BigDecimal actualTroyOunce = WeightUnitVO.GRAM.convertValueTo(value, WeightUnitVO.TROY_OUNCE);
         assertEqualsBigDecimal("GRAM to TROY_OUNCE conversion failed", expectedTroyOunce, actualTroyOunce);
@@ -78,7 +78,7 @@ public class WeightUnitVOTest {
         BigDecimal actualOunce = WeightUnitVO.CARAT.convertValueTo(value, WeightUnitVO.OUNCE);
         assertEqualsBigDecimal("CARAT to OUNCE conversion failed", expectedOunce, actualOunce);
 
-        // CARAT to TROY_OUNCE: Using the exact 'but was' value from the last test run: 0.64301493
+        // CARAT to TROY_OUNCE
         BigDecimal expectedTroyOunce = new BigDecimal("0.64301493");
         BigDecimal actualTroyOunce = WeightUnitVO.CARAT.convertValueTo(value, WeightUnitVO.TROY_OUNCE);
         assertEqualsBigDecimal("CARAT to TROY_OUNCE conversion failed", expectedTroyOunce, actualTroyOunce);
@@ -112,4 +112,18 @@ public class WeightUnitVOTest {
             }
         }
     }
+
+    @Test
+    public void testNegativeValueConversions() {
+        BigDecimal negativeValue = new BigDecimal("-1");
+
+        for (WeightUnitVO source : WeightUnitVO.values()) {
+            for (WeightUnitVO target : WeightUnitVO.values()) {
+                // Use assertThrows to check for IllegalArgumentException
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> source.convertValueTo(negativeValue, target));
+                assertEquals("Value must not be negative", exception.getMessage());
+            }
+        }
+    }
 }
+

@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for WeightVO to validate its functionality.
+ */
 public class WeightVOTest {
 
     // Helper method for BigDecimal comparisons using the VO's defined scale and rounding mode
@@ -14,7 +17,7 @@ public class WeightVOTest {
                 .setScale(WeightVO.WeightUnit.SCALE, WeightVO.WeightUnit.ROUNDING_MODE)
                 .stripTrailingZeros();
 
-        // The actual value returned by inGrams() or amount() from toUnit() should already be scaled/stripped by the VO constructor
+        // The actual value returned should already be scaled/stripped by the VO constructor
         assertEquals(expected, actualValue.stripTrailingZeros(), message);
     }
 
@@ -29,25 +32,30 @@ public class WeightVOTest {
 
     @Test
     public void testCreationWithInvalidAmount() {
-        assertThrows(IllegalArgumentException.class, () -> new WeightVO(new BigDecimal("-1"), WeightVO.WeightUnit.GRAM), "amount must not be negative");
+        assertThrows(IllegalArgumentException.class, () ->
+                        new WeightVO(new BigDecimal("-1"), WeightVO.WeightUnit.GRAM),
+                "Amount must not be negative");
     }
 
     @Test
     public void testCreationWithNullAmount() {
-        assertThrows(NullPointerException.class, () -> new WeightVO(null, WeightVO.WeightUnit.GRAM), "amount must not be null");
+        assertThrows(NullPointerException.class, () ->
+                        new WeightVO(null, WeightVO.WeightUnit.GRAM),
+                "Amount must not be null");
     }
 
     @Test
     public void testCreationWithNullUnit() {
-        assertThrows(NullPointerException.class, () -> new WeightVO(new BigDecimal("10"), null), "unit must not be null");
+        assertThrows(NullPointerException.class, () ->
+                        new WeightVO(new BigDecimal("10"), null),
+                "Unit must not be null");
     }
 
     @Test
     public void testMaxWeightValidation() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            // MAX_GRAMS is 100000.0, this input is slightly over
-            WeightVO.ofGrams(new BigDecimal("100000.1"));
-        }, "amount exceeds maximum allowed weight");
+        assertThrows(IllegalArgumentException.class, () ->
+                        WeightVO.ofGrams(new BigDecimal("100000.1")),
+                "Amount exceeds maximum allowed weight");
     }
 
     @Test
@@ -57,18 +65,16 @@ public class WeightVOTest {
         // Check inGrams() output (rounded to SCALE 4)
         assertEqualsVOValue("inGrams() conversion failed", "28.3495", weightInOunces.inGrams());
 
-        // Convert to Gram unit and check the amount (which is normalized in the constructor to SCALE 4)
+        // Convert to Gram unit and check the normalized amount
         WeightVO weightInGrams = weightInOunces.toUnit(WeightVO.WeightUnit.GRAM);
         assertEqualsVOValue("toUnit(GRAM) amount failed", "28.3495", weightInGrams.amount());
 
-        // Convert to Carat unit and check the amount (normalized to SCALE 4)
+        // Convert to Carat unit and check the normalized amount
         WeightVO weightInCarats = weightInGrams.toUnit(WeightVO.WeightUnit.CARAT);
-        // Using the 'but was' value from the test run: 141.7475
         assertEqualsVOValue("toUnit(CARAT) amount failed", "141.7475", weightInCarats.amount());
 
-        // Convert to Troy Ounce unit and check the amount (normalized to SCALE 4)
+        // Convert to Troy Ounce unit and check the normalized amount
         WeightVO weightInTroyOunces = weightInGrams.toUnit(WeightVO.WeightUnit.TROY_OUNCE);
-        // 28.3495 grams / 31.1034768 = 0.911458... rounded to 0.9115
         assertEqualsVOValue("toUnit(TROY_OUNCE) amount failed", "0.9115", weightInTroyOunces.amount());
     }
 
@@ -93,7 +99,9 @@ public class WeightVOTest {
 
         // Test subtraction resulting in negative (should throw exception)
         WeightVO smallWeight = WeightVO.ofGrams(new BigDecimal("10"));
-        assertThrows(IllegalArgumentException.class, () -> smallWeight.subtract(weightB), "resulting weight must not be negative");
+        assertThrows(IllegalArgumentException.class, () ->
+                        smallWeight.subtract(weightB),
+                "Resulting weight must not be negative");
     }
 
     @Test
@@ -103,6 +111,9 @@ public class WeightVOTest {
 
         assertTrue(weightA.compareTo(weightB) > 0, "Weight A should be greater than Weight B");
         assertTrue(weightB.compareTo(weightA) < 0, "Weight B should be less than Weight A");
-        assertEquals(0, weightA.compareTo(WeightVO.ofGrams(new BigDecimal("500.0"))), "Equal weights should return 0");
+        assertEquals(0, weightA.compareTo(WeightVO.ofGrams(new BigDecimal("500.0"))),
+                "Equal weights should return 0");
     }
 }
+
+
