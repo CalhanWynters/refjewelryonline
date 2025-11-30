@@ -201,5 +201,29 @@ public class RingVariantTest {
         assertEquals(standardVariant.weight(), discontinuedVariant.weight());
     }
 
+    @Test
+    public void createFactoryProducesDraftStatusVariantWithGeneratedSkuAndPrintData() {
+        RingVariant variant = RingVariant.create(defaultSize, defaultStyle, Money.of(500, USD), defaultWeight, defaultMaterials, defaultCare);
+
+        assertNotNull(variant);
+        assertEquals(VariantStatusEnums.DRAFT, variant.status());
+        assertTrue(variant.sku().startsWith("RING-"));
+        assertTrue(variant.gemstones().isEmpty());
+
+        // --- UPDATED CODE TO PRINT THE RESULTING DATA ---
+        System.out.println("--- Ring Variant Data Printout (from Test) ---");
+        System.out.println("ID: " + variant.id());
+        System.out.println("SKU: " + variant.sku());
+        System.out.println("Status: " + variant.status());
+        // Updated accessor from .value() to the correct .diameterMm() based on your RingSizeVO code
+        System.out.println("Size: " + variant.size().diameterMm() + "mm");
+        System.out.println("Weight: " + variant.weight().amount() + " " + variant.weight().unit());
+        System.out.println("Base Price: " + variant.basePrice());
+        System.out.println("Current Price: " + variant.currentPrice());
+        System.out.println("Materials: " + variant.materials());
+        System.out.println("Care Instructions: " + variant.careInstructions().instructions());
+        System.out.println("---------------------------------------------");
+    }
+
     // Optionally, more test cases can be added for additional edge scenarios, particularly focusing on weight-related logic.
 }
