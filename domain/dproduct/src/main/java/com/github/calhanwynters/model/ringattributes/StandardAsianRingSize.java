@@ -7,28 +7,41 @@ import java.util.Comparator;
 import java.util.Optional;
 
 /**
- * Represents the specific, standardized German ring sizes available for sale in inventory.
- * Each enum value's display string is its internal diameter in millimeters (ISO 8653 standard).
+ * Represents the specific, standardized Japanese/Chinese/HK ring sizes available for sale in inventory.
+ * Each enum value maps to an exact ISO diameter (internal diameter in mm).
+ * The system typically uses whole sizes, where Size 1 is 13.0mm, and each size increments by approximately 0.33mm diameter.
  */
-public enum StandardGermanRingSize {
-    // Note: These sizes are the internal diameter in millimeters.
-    SIZE_15_0("15.0", new BigDecimal("15.0")),
-    SIZE_15_5("15.5", new BigDecimal("15.5")),
-    SIZE_16_0("16.0", new BigDecimal("16.0")),
-    SIZE_16_5("16.5", new BigDecimal("16.5")),
-    SIZE_17_0("17.0", new BigDecimal("17.0")),
-    SIZE_17_5("17.5", new BigDecimal("17.5")),
-    SIZE_18_0("18.0", new BigDecimal("18.0")),
-    SIZE_18_5("18.5", new BigDecimal("18.5")),
-    SIZE_19_0("19.0", new BigDecimal("19.0")),
-    SIZE_19_5("19.5", new BigDecimal("19.5")),
-    SIZE_20_0("20.0", new BigDecimal("20.0")),
-    SIZE_20_5("20.5", new BigDecimal("20.5")),
-    SIZE_21_0("21.0", new BigDecimal("21.0"));
+public enum StandardAsianRingSize {
+    // Note: These sizes are the internal diameter in millimeters. Common sizes are listed.
+    SIZE_1("1", new BigDecimal("13.0")),
+    SIZE_2("2", new BigDecimal("13.3")),
+    SIZE_3("3", new BigDecimal("13.7")), // Note: charts vary slightly here, sometimes 13.66
+    SIZE_4("4", new BigDecimal("14.0")),
+    SIZE_5("5", new BigDecimal("14.3")),
+    SIZE_6("6", new BigDecimal("14.7")),
+    SIZE_7("7", new BigDecimal("15.0")),
+    SIZE_8("8", new BigDecimal("15.3")),
+    SIZE_9("9", new BigDecimal("15.7")),
+    SIZE_10("10", new BigDecimal("16.0")),
+    SIZE_11("11", new BigDecimal("16.3")),
+    SIZE_12("12", new BigDecimal("16.7")),
+    SIZE_13("13", new BigDecimal("17.0")),
+    SIZE_14("14", new BigDecimal("17.3")),
+    SIZE_15("15", new BigDecimal("17.7")),
+    SIZE_16("16", new BigDecimal("18.0")),
+    SIZE_17("17", new BigDecimal("18.3")),
+    SIZE_18("18", new BigDecimal("18.7")),
+    SIZE_19("19", new BigDecimal("19.0")),
+    SIZE_20("20", new BigDecimal("19.3")),
+    SIZE_21("21", new BigDecimal("19.7")),
+    SIZE_22("22", new BigDecimal("20.0")),
+    SIZE_23("23", new BigDecimal("20.3")),
+    SIZE_24("24", new BigDecimal("20.7")),
+    SIZE_25("25", new BigDecimal("21.0")),
+    SIZE_26("26", new BigDecimal("21.3"));
     // ... ensure all sizes you stock are added here.
 
     // Define the scale and PI in a static nested class to bypass initialization order rules
-    // (This pattern is slightly cleaner than using literals in the constructor)
     private static class Constants {
         static final int LOCAL_SCALE = 2;
         static final RoundingMode ROUNDING_MODE = RoundingMode.HALF_UP;
@@ -40,11 +53,11 @@ public enum StandardGermanRingSize {
     private final BigDecimal isoDiameterMm;
 
     /**
-     * Constructor for German ring sizes.
-     * @param displayString The string representation (e.g., "17.5").
+     * Constructor for Japanese ring sizes.
+     * @param displayString The string representation (e.g., "15").
      * @param isoDiameterMm The diameter value in mm.
      */
-    StandardGermanRingSize(String displayString, BigDecimal isoDiameterMm) {
+    StandardAsianRingSize(String displayString, BigDecimal isoDiameterMm) {
         this.displayString = displayString;
         // Access constants safely through the nested class
         this.isoDiameterMm = isoDiameterMm.setScale(Constants.LOCAL_SCALE, Constants.ROUNDING_MODE);
@@ -54,6 +67,7 @@ public enum StandardGermanRingSize {
         return displayString;
     }
 
+    /** Returns the internal diameter in millimeters (ISO standard), rounded to LOCAL_SCALE. */
     public BigDecimal getIsoDiameterMm() {
         return isoDiameterMm;
     }
@@ -65,12 +79,12 @@ public enum StandardGermanRingSize {
     }
 
     /**
-     * Finds the closest standard German stock size based on a measured or calculated diameter.
+     * Finds the closest standard Japanese/Chinese stock size based on a measured or calculated diameter.
      *
-     * @param targetDiameterMm The target internal diameter in millimeters (e.g., 17.35mm).
+     * @param targetDiameterMm The target internal diameter in millimeters (e.g., 17.3mm).
      * @return An Optional containing the closest matching standard stock size, or empty if input is null.
      */
-    public static Optional<StandardGermanRingSize> findClosestStandardSize(BigDecimal targetDiameterMm) {
+    public static Optional<StandardAsianRingSize> findClosestStandardSizeFromDiameter(BigDecimal targetDiameterMm) {
         if (targetDiameterMm == null) {
             return Optional.empty();
         }
